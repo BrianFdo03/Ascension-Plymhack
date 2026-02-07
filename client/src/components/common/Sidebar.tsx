@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import {
     LayoutDashboard,
     Route,
@@ -23,7 +23,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     onNavigate
 }) => {
     const location = useLocation();
-    const navigate = useNavigate();
 
     // Use prop if provided, otherwise fall back to current URL location
     const activePath = propActivePath || location.pathname;
@@ -32,14 +31,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
         { label: 'Routes', icon: Route, href: '/routes' },
         { label: 'Drivers', icon: Users, href: '/drivers' },
-        { label: 'Vehicles', icon: Bus, href: '/vehicles' },
+        { label: 'Add Bus', icon: Bus, href: '/add-bus' },
     ];
 
     const handleNavClick = (path: string) => {
         if (onNavigate) {
             onNavigate(path);
-        } else {
-            navigate(path);
         }
     };
 
