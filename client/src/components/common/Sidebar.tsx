@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Route,
@@ -18,9 +19,10 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-    activePath = '/dashboard',
     onNavigate
 }) => {
+    const location = useLocation();
+    const activePath = location.pathname;
 
     const mainNavItems: NavItem[] = [
         { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -51,8 +53,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                     const Icon = item.icon;
 
                     return (
-                        <button
+                        <Link
                             key={item.href}
+                            to={item.href}
                             onClick={() => handleNavClick(item.href)}
                             className={`
                                 group relative w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium rounded-2xl transition-all duration-300 ease-out overflow-hidden
@@ -85,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             {isActive && (
                                 <div className="absolute right-4 w-1.5 h-1.5 rounded-full bg-white/40 ring-4 ring-white/10" />
                             )}
-                        </button>
+                        </Link>
                     );
                 })}
             </nav>

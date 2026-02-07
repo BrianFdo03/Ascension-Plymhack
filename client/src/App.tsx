@@ -1,8 +1,16 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
+import Drivers from './pages/Drivers';
 
 function App() {
   return (
-    <Dashboard />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/drivers" element={<Drivers />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
