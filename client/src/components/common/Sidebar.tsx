@@ -3,7 +3,8 @@ import {
     LayoutDashboard,
     Route,
     Users,
-    Bus
+    Bus,
+    LogOut
 } from 'lucide-react';
 
 
