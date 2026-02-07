@@ -10,7 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/trips" element={<RoutesPage />} />
+        <Route path="/routes" element={<RoutesPage />} />
         <Route path="/drivers" element={<Drivers />} />
         <Route path="/add-bus" element={<AddBus />} />
       </Routes>
