@@ -10,9 +10,9 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, percentage, icon: Icon, trend }: StatCardProps) => {
   return (
-    <div className="bg-[#F8F9FA] rounded-xl p-6 shadow-sm border border-gray-100/50 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white rounded-xl p-6 shadow-sm border border-blue-100 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
-        <div className="p-2 bg-[#E6E8EB] rounded-lg text-gray-600">
+        <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
           <Icon size={24} />
         </div>
         <div className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full ${
