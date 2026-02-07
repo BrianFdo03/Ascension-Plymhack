@@ -9,7 +9,7 @@ interface LayoutProps {
 
 const Layout = ({ children, title, action }: LayoutProps) => {
   return (
-    <div className="flex min-h-screen bg-[#FAFBFF]">
+    <div className="flex h-screen bg-[#FAFBFF] overflow-hidden">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">
