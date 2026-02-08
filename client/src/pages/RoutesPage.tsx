@@ -158,10 +158,10 @@ const RoutesPage: React.FC = () => {
             setIsModalOpen(false);
             setEditingRoute(null);
             fetchRoutes(); // Refresh list
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to save route:", error);
-            // toast.error("Failed to save route");
-            alert("Failed to save route");
+            const errorMessage = error.response?.data?.message || "Failed to save route";
+            alert(errorMessage);
         }
     };
 
