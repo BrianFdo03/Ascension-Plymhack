@@ -1,4 +1,4 @@
-import { DollarSign, ShoppingCart, Users, Package } from "lucide-react";
+import { Bus, Route, BadgeDollarSign } from "lucide-react";
 import StatCard from "./StatCard";
 
 // Accepting refreshKey even if not used yet, to match user's snippet
@@ -11,31 +11,31 @@ const DashboardStats = ({ refreshKey }: DashboardStatsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          title="Total Revenue"
-          value="$45,231.89"
+          title="Active Buses"
+          value="420"
           percentage="20.1%"
-          icon={DollarSign}
+          icon={Bus}
           trend="up"
         />
         <StatCard
-          title="Total Orders"
-          value="2,345"
+          title="Total Buses"
+          value="825"
           percentage="15.2%"
-          icon={ShoppingCart}
+          icon={Bus}
           trend="up"
         />
         <StatCard
-          title="Total Customers"
-          value="1,234"
+          title="Total Routes"
+          value="825"
           percentage="12.5%"
-          icon={Users}
+          icon={Route}
           trend="up"
         />
         <StatCard
-          title="Total Products"
-          value="48"
+          title="Total Revenue"
+          value="$48,000"
           percentage="4.5%"
-          icon={Package}
+          icon={BadgeDollarSign}
           trend="up"
         />
     </div>
