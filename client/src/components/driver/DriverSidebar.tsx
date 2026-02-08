@@ -1,6 +1,7 @@
 import { Bus, Users, MessageSquare, MapPin, LogOut, Menu, X, TrendingUp } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { useState } from 'react';
+import { NotificationBell } from '../common/NotificationBell';
 
 const DriverSidebar = () => {
     const location = useLocation();
@@ -34,14 +35,17 @@ const DriverSidebar = () => {
             >
                 {/* Logo */}
                 <div className="p-6 border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <Bus size={24} className="text-white" />
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <Bus size={24} className="text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold text-gray-900">Driver Portal</h1>
+                                <p className="text-xs text-gray-500">Ascension</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-xl font-bold text-gray-900">Driver Portal</h1>
-                            <p className="text-xs text-gray-500">Ascension</p>
-                        </div>
+                        <NotificationBell />
                     </div>
                 </div>
 

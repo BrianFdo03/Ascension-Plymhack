@@ -1,5 +1,6 @@
 const Booking = require('../../models/Booking');
 const Route = require('../../models/Route');
+const Notification = require('../../models/Notification');
 
 // Create new booking
 exports.createBooking = async (req, res) => {
@@ -36,6 +37,32 @@ exports.createBooking = async (req, res) => {
             status: 'upcoming',
             paymentStatus: 'pending'
         });
+        
+        // Send notification to passenger
+        const notification = await Notification.create({
+            recipientType: 'passenger',
+            recipientId: passengerId,
+            title: 'Booking Confirmed',
+            message: `Your booking for Route ${routeNo} from ${from} to ${to} has been confirmed. ${totalSeats} seat(s) booked.`,
+            type: 'success',
+            priority: 'high',
+            data: {
+                bookingId: booking._id,
+                routeNo,
+                from,
+                to,
+                date,
+                time,
+                seats,
+                totalAmount
+            }
+        });
+
+        // Emit real-time notification via Socket.IO
+        const io = req.app.get('io');
+        if (io) {
+            io.to(passengerId).emit('new_notification', notification);
+        }
         
         res.status(201).json({
             success: true,
@@ -205,6 +232,26 @@ exports.cancelBooking = async (req, res) => {
         
         booking.status = 'cancelled';
         await booking.save();
+        
+        // Send cancellation notification
+        const notification = await Notification.create({
+            recipientType: 'passenger',
+            recipientId: booking.passengerId.toString(),
+            title: 'Booking Cancelled',
+            message: `Your booking for Route ${booking.routeNo} has been cancelled successfully.`,
+            type: 'info',
+            priority: 'medium',
+            data: {
+                bookingId: booking._id,
+                routeNo: booking.routeNo
+            }
+        });
+
+        // Emit real-time notification
+        const io = req.app.get('io');
+        if (io) {
+            io.to(booking.passengerId.toString()).emit('new_notification', notification);
+        }
         
         res.status(200).json({
             success: true,

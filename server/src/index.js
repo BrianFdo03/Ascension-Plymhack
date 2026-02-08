@@ -38,8 +38,10 @@ app.use((req, res, next) => {
 // API Routes
 const passengerRoutes = require('./routes/passenger');
 const driverRoutes = require('./routes/driver');
+const notificationRoutes = require('./routes/notifications');
 app.use('/api/passenger', passengerRoutes);
 app.use('/api/driver', driverRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling middleware
 const { errorHandler, notFound } = require('./middlewares/errorHandler');
@@ -52,6 +54,9 @@ app.get("/", (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
+// Make io accessible to routes
+app.set('io', io);
+
 // WebSocket connection handling
 const connectedUsers = new Map(); // Track connected users
 
@@ -61,7 +66,10 @@ io.on("connection", (socket) => {
   // Join room based on user type
   socket.on("join", (data) => {
     const { userId, userType, userName } = data;
-    socket.join(userType); // 'admin' or 'driver'
+    socket.join(userType); // 'admin', 'driver', or 'passenger'
+    if (userId) {
+      socket.join(userId); // Join personal room for targeted notifications
+    }
     
     // Store user info
     connectedUsers.set(socket.id, { userId, userType, userName, socketId: socket.id });
