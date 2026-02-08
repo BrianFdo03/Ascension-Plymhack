@@ -1,24 +1,15 @@
 ﻿import Layout from "../components/layout/Layout";
 import { Filter, Pencil, Trash2, X } from "lucide-react";
-import { useState } from "react";
-
-interface Driver {
-  id: number;
-  name: string;
-  licenseNumber: string;
-  nic: string;
-  dateOfBirth: string;
-  address: string;
-  phone: string;
-  email: string;
-}
+import { useState, useEffect } from "react";
+import * as driverService from "../services/driverService";
+import type { Driver } from "../services/driverService";
 
 const Drivers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newDriver, setNewDriver] = useState<Omit<Driver, 'id'>>({
+  const [newDriver, setNewDriver] = useState({
     name: "",
     licenseNumber: "",
     nic: "",
@@ -27,50 +18,31 @@ const Drivers = () => {
     phone: "",
     email: "",
   });
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - replace with actual data from API
-  const [drivers, setDrivers] = useState<Driver[]>([
-    {
-      id: 1,
-      name: "John Smith",
-      licenseNumber: "DL-123456",
-      nic: "123456789V",
-      dateOfBirth: "1985-03-15",
-      address: "123 Main St, Plymouth",
-      phone: "+1 (555) 123-4567",
-      email: "john.smith@email.com",
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      licenseNumber: "DL-789012",
-      nic: "987654321V",
-      dateOfBirth: "1990-07-22",
-      address: "456 Oak Ave, Plymouth",
-      phone: "+1 (555) 234-5678",
-      email: "sarah.johnson@email.com",
-    },
-    {
-      id: 3,
-      name: "Michael Brown",
-      licenseNumber: "DL-345678",
-      nic: "456789123V",
-      dateOfBirth: "1988-11-08",
-      address: "789 Pine Rd, Plymouth",
-      phone: "+1 (555) 345-6789",
-      email: "michael.brown@email.com",
-    },
-    {
-      id: 4,
-      name: "Emily Davis",
-      licenseNumber: "DL-901234",
-      nic: "321654987V",
-      dateOfBirth: "1992-05-30",
-      address: "321 Elm St, Plymouth",
-      phone: "+1 (555) 456-7890",
-      email: "emily.davis@email.com",
-    },
-  ]);
+  // Fetch drivers on component mount
+  useEffect(() => {
+    fetchDrivers();
+  }, []);
+
+  const fetchDrivers = async () => {
+    try {
+      console.log('🔄 Starting to fetch drivers...');
+      setLoading(true);
+      setError(null);
+      const data = await driverService.getDrivers();
+      setDrivers(data);
+      console.log('✅ Drivers loaded successfully');
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to load drivers. Please try again.';
+      setError(errorMessage);
+      console.error('❌ Error in fetchDrivers:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle edit driver
   const handleEdit = (driver: Driver) => {
@@ -79,11 +51,16 @@ const Drivers = () => {
   };
 
   // Handle save changes
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     if (editingDriver) {
-      setDrivers(drivers.map(d => d.id === editingDriver.id ? editingDriver : d));
-      setIsEditModalOpen(false);
-      setEditingDriver(null);
+      try {
+        await driverService.updateDriver(editingDriver._id, editingDriver);
+        await fetchDrivers();
+        setIsEditModalOpen(false);
+        setEditingDriver(null);
+      } catch (err: any) {
+        alert(err.message || 'Failed to update driver');
+      }
     }
   };
 
@@ -101,10 +78,15 @@ const Drivers = () => {
   };
 
   // Handle delete driver
-  const handleDelete = (driverId: number) => {
-    const driver = drivers.find(d => d.id === driverId);
+  const handleDelete = async (driverId: string) => {
+    const driver = drivers.find(d => d._id === driverId);
     if (driver && window.confirm(`Are you sure you want to delete ${driver.name}?`)) {
-      setDrivers(drivers.filter(d => d.id !== driverId));
+      try {
+        await driverService.deleteDriver(driverId);
+        await fetchDrivers();
+      } catch (err: any) {
+        alert(err.message || 'Failed to delete driver');
+      }
     }
   };
 
@@ -114,13 +96,23 @@ const Drivers = () => {
   };
 
   // Handle save new driver
-  const handleSaveNewDriver = () => {
-    if (newDriver.name && newDriver.licenseNumber && newDriver.nic) {
-      const driverToAdd: Driver = {
-        ...newDriver,
-        id: Math.max(...drivers.map(d => d.id), 0) + 1,
-      };
-      setDrivers([...drivers, driverToAdd]);
+  const handleSaveNewDriver = async () => {
+    console.log('🔄 Attempting to save new driver...');
+    
+    // Validate required fields
+    if (!newDriver.name || !newDriver.licenseNumber || !newDriver.nic) {
+      const errorMsg = 'Please fill in all required fields (Name, License Number, and NIC)';
+      alert(errorMsg);
+      console.warn('⚠️ Validation failed:', errorMsg);
+      return;
+    }
+    
+    console.log('✓ Validation passed, creating driver:', newDriver);
+    
+    try {
+      await driverService.createDriver(newDriver);
+      console.log('✅ Driver created, fetching updated list...');
+      await fetchDrivers();
       setIsAddModalOpen(false);
       // Reset form
       setNewDriver({
@@ -132,6 +124,11 @@ const Drivers = () => {
         phone: "",
         email: "",
       });
+      console.log('✅ Form reset and modal closed');
+    } catch (err: any) {
+      const errorMsg = err.message || 'Failed to add driver';
+      alert(errorMsg);
+      console.error('❌ Error in handleSaveNewDriver:', err);
     }
   };
 
@@ -151,7 +148,7 @@ const Drivers = () => {
   };
 
   // Handle new driver input change
-  const handleNewDriverInputChange = (field: keyof Omit<Driver, 'id'>, value: string) => {
+  const handleNewDriverInputChange = (field: string, value: string) => {
     setNewDriver({ ...newDriver, [field]: value });
   };
 
@@ -171,6 +168,13 @@ const Drivers = () => {
   return (
     <Layout title="Drivers">
       <div className="space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
         {/* Add Driver Modal */}
         {isAddModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -501,16 +505,22 @@ const Drivers = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredDrivers.length === 0 ? (
+                {loading ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                      No drivers found matching "{searchQuery}"
+                      Loading drivers...
+                    </td>
+                  </tr>
+                ) : filteredDrivers.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                      {searchQuery ? `No drivers found matching "${searchQuery}"` : 'No drivers found. Click "Add Driver" to create one.'}
                     </td>
                   </tr>
                 ) : (
                   filteredDrivers.map((driver) => (
                     <tr
-                      key={driver.id}
+                      key={driver._id}
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4">
@@ -546,7 +556,7 @@ const Drivers = () => {
                             <Pencil size={18} />
                           </button>
                           <button 
-                            onClick={() => handleDelete(driver.id)}
+                            onClick={() => handleDelete(driver._id)}
                             className="text-gray-400 hover:text-red-600 transition-colors"
                             title="Delete driver"
                           >
