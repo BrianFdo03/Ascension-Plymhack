@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PassengerLayout from '../../components/passenger/PassengerLayout';
-import { MapPin, Navigation, Bus, Clock, Users, TrendingUp } from 'lucide-react';
+import { MapPin, Bus, Clock, Users, TrendingUp } from 'lucide-react';
+import GoogleMap from '../../components/common/GoogleMap';
 
 interface LiveBus {
     id: string;
@@ -17,6 +18,13 @@ const LIVE_BUSES: LiveBus[] = [
     { id: '1', routeNo: '138', currentLocation: 'Nugegoda', nextStop: 'Maharagama', eta: '5 min', passengers: 35, capacity: 50, speed: '45 km/h' },
     { id: '2', routeNo: '01', currentLocation: 'Kaduwela', nextStop: 'Malabe', eta: '8 min', passengers: 42, capacity: 50, speed: '50 km/h' },
     { id: '3', routeNo: '87', currentLocation: 'Kiribathgoda', nextStop: 'Kadawatha', eta: '12 min', passengers: 28, capacity: 50, speed: '40 km/h' },
+];
+
+// Bus locations on map (Colombo area)
+const BUS_LOCATIONS = [
+    { lat: 6.8649, lng: 79.8997, label: 'Route 138 - Nugegoda' },
+    { lat: 6.9334, lng: 79.9800, label: 'Route 01 - Kaduwela' },
+    { lat: 6.9897, lng: 79.9219, label: 'Route 87 - Kiribathgoda' },
 ];
 
 const LiveTracking = () => {
@@ -60,23 +68,12 @@ const LiveTracking = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="h-[500px] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center relative">
-                        <div className="text-center">
-                            <MapPin size={64} className="text-blue-400 mx-auto mb-4 animate-bounce" />
-                            <p className="text-gray-700 font-semibold text-lg">Google Maps Integration</p>
-                            <p className="text-sm text-gray-500 mt-2">Live bus tracking will be displayed here</p>
-                        </div>
-                        {/* Simulated bus markers */}
-                        <div className="absolute top-20 left-20 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg animate-pulse">
-                            138
-                        </div>
-                        <div className="absolute top-40 right-32 w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg animate-pulse">
-                            01
-                        </div>
-                        <div className="absolute bottom-32 left-40 w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg animate-pulse">
-                            87
-                        </div>
-                    </div>
+                    <GoogleMap
+                        center={{ lat: 6.9271, lng: 79.8612 }}
+                        markers={BUS_LOCATIONS}
+                        zoom={12}
+                        height="500px"
+                    />
                 </div>
 
                 {/* Live Buses List */}

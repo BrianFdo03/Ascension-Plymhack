@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import PassengerLayout from '../../components/passenger/PassengerLayout';
 import { Search, MapPin, Clock, Navigation, TrendingUp, Star } from 'lucide-react';
+import GoogleMap from '../../components/common/GoogleMap';
 
 interface BusRoute {
     id: string;
@@ -18,6 +19,14 @@ const POPULAR_ROUTES: BusRoute[] = [
     { id: '1', routeNo: '138', from: 'Pettah', to: 'Homagama', duration: '45 min', nextBus: '5 min', fare: 'Rs. 50', rating: 4.5 },
     { id: '2', routeNo: '01', from: 'Colombo', to: 'Kandy', duration: '3 hrs', nextBus: '15 min', fare: 'Rs. 250', rating: 4.8 },
     { id: '3', routeNo: '87', from: 'Colombo', to: 'Jaffna', duration: '8 hrs', nextBus: '30 min', fare: 'Rs. 800', rating: 4.3 },
+];
+
+// Live bus locations for map
+const LIVE_BUS_LOCATIONS = [
+    { lat: 6.8649, lng: 79.8997, label: 'Route 138 - Nugegoda' },
+    { lat: 6.9334, lng: 79.9800, label: 'Route 01 - Kaduwela' },
+    { lat: 6.9897, lng: 79.9219, label: 'Route 87 - Kiribathgoda' },
+    { lat: 6.9271, lng: 79.8612, label: 'Route 122 - Colombo Fort' },
 ];
 
 const PassengerDashboard = () => {
@@ -173,19 +182,28 @@ const PassengerDashboard = () => {
                     </div>
                 )}
 
-                {/* Google Map Placeholder */}
+                {/* Google Map */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-xl font-bold text-gray-900">Live Bus Tracking</h2>
-                        <p className="text-sm text-gray-500 mt-1">Track buses in real-time on the map</p>
-                    </div>
-                    <div className="h-96 bg-gray-100 flex items-center justify-center">
-                        <div className="text-center">
-                            <MapPin size={48} className="text-gray-400 mx-auto mb-3" />
-                            <p className="text-gray-500 font-medium">Google Maps Integration</p>
-                            <p className="text-sm text-gray-400 mt-1">Map will be displayed here</p>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">Live Bus Tracking</h2>
+                                <p className="text-sm text-gray-500 mt-1">Track buses in real-time on the map</p>
+                            </div>
+                            <button
+                                onClick={() => navigate('/passenger/tracking')}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                            >
+                                View Full Map
+                            </button>
                         </div>
                     </div>
+                    <GoogleMap
+                        center={{ lat: 6.9271, lng: 79.8612 }}
+                        markers={LIVE_BUS_LOCATIONS}
+                        zoom={12}
+                        height="400px"
+                    />
                 </div>
 
                 {/* Popular Routes */}
