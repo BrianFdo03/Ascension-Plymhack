@@ -9,36 +9,143 @@ import {
     MapPin,
     ArrowRight
 } from 'lucide-react';
+import { useJsApiLoader } from '@react-google-maps/api';
 import Layout from "../components/layout/Layout";
 import AddRouteModal from '../components/routes/AddRouteModal';
+import RouteDetailsModal from '../components/routes/RouteDetailsModal';
 
 // Define the shape of a Route object
 interface BusRoute {
     id: string;
     routeNumber: string;
     origin: string;
+    originCoords: { lat: number; lng: number };
     destination: string;
-    stops: number;
+    destinationCoords: { lat: number; lng: number };
+    stop_count_display?: number; // legacy, can remove if unused
+    stopsList: { name: string; price: string; lat: number; lng: number }[]; // For details modal
     status: 'Active' | 'Inactive';
 }
 
+const libraries: ("places")[] = ["places"];
+
 const RoutesPage: React.FC = () => {
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+        libraries,
+    });
+
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [selectedRoute, setSelectedRoute] = useState<BusRoute | null>(null);
+    const [editingRoute, setEditingRoute] = useState<BusRoute | null>(null);
+
+    // Filter States
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
+    const [stopsFilter, setStopsFilter] = useState<'Any' | 'Short' | 'Medium' | 'Long'>('Any');
 
     // Mock Data for Routes
     const [routes, setRoutes] = useState<BusRoute[]>([
-        { id: '1', routeNumber: '17', origin: 'Panadura', destination: 'Kandy', stops: 24, status: 'Active' },
-        { id: '2', routeNumber: '138', origin: 'Pettah', destination: 'Homagama', stops: 18, status: 'Active' },
-        { id: '3', routeNumber: '01', origin: 'Colombo', destination: 'Kandy', stops: 12, status: 'Active' },
-        { id: '4', routeNumber: '87', origin: 'Colombo', destination: 'Jaffna', stops: 45, status: 'Inactive' },
-        { id: '5', routeNumber: '122', origin: 'Pettah', destination: 'Avissawella', stops: 32, status: 'Inactive' },
+        {
+            id: '1',
+            routeNumber: '17',
+            origin: 'Panadura',
+            originCoords: { lat: 6.7115, lng: 79.9074 },
+            destination: 'Kandy',
+            destinationCoords: { lat: 7.2906, lng: 80.6337 },
+            stopsList: [
+                { name: "Moratuwa", price: "50", lat: 6.7744, lng: 79.8816 },
+                { name: "Colombo Fort", price: "120", lat: 6.9319, lng: 79.8478 },
+                { name: "Paliyagoda", price: "150", lat: 6.9649, lng: 79.8863 },
+                { name: "Kellaniya", price: "160", lat: 6.9555, lng: 79.9175 },
+                { name: "Kadawatha", price: "200", lat: 7.0016, lng: 79.9515 }
+            ],
+            status: 'Active'
+        },
+        {
+            id: '2',
+            routeNumber: '138',
+            origin: 'Pettah',
+            originCoords: { lat: 6.9366, lng: 79.8449 },
+            destination: 'Homagama',
+            destinationCoords: { lat: 6.8412, lng: 80.0034 },
+            stopsList: [],
+            status: 'Active'
+        },
+        {
+            id: '3',
+            routeNumber: '01',
+            origin: 'Colombo',
+            originCoords: { lat: 6.9271, lng: 79.8612 },
+            destination: 'Kandy',
+            destinationCoords: { lat: 7.2906, lng: 80.6337 },
+            stopsList: [],
+            status: 'Active'
+        },
+        // ... add more mocked coords/stops if needed for other routes to look good
     ]);
+
+    // Derived Filtered Routes
+    const filteredRoutes = routes.filter(route => {
+        // Search Filter
+        const query = searchQuery.toLowerCase();
+        const matchesSearch =
+            route.routeNumber.toLowerCase().includes(query) ||
+            route.origin.toLowerCase().includes(query) ||
+            route.destination.toLowerCase().includes(query);
+
+        // Status Filter
+        const matchesStatus = statusFilter === 'All' || route.status === statusFilter;
+
+        // Stops Filter (Short < 5, Medium 5-15, Long > 15)
+        let matchesStops = true;
+        const stopsCount = route.stopsList.length;
+        if (stopsFilter === 'Short') matchesStops = stopsCount < 5;
+        else if (stopsFilter === 'Medium') matchesStops = stopsCount >= 5 && stopsCount <= 15;
+        else if (stopsFilter === 'Long') matchesStops = stopsCount > 15;
+
+        return matchesSearch && matchesStatus && matchesStops;
+    });
 
     // Handler for Deleting a route
     const handleDelete = (id: string) => {
         if (confirm('Are you sure you want to delete this route?')) {
             setRoutes(routes.filter(route => route.id !== id));
         }
+    };
+
+    const handleViewDetails = (route: BusRoute) => {
+        // Transform BusRoute to match RouteDetailsModal's expected RouteData format
+        // Note: RouteDetailsModal expects stops to have optional lat/lng, but our mock has required.
+        // Typescript might complain if we don't map explicitly or if types don't align perfectly.
+        // Let's rely on structural typing or simple casting if needed, but manual variable is safer.
+        setSelectedRoute(route);
+        setViewModalOpen(true);
+    };
+
+    const handleEditRoute = (route: BusRoute) => {
+        setEditingRoute(route);
+        setIsModalOpen(true);
+    };
+
+    const handleAddNewRoute = () => {
+        setEditingRoute(null);
+        setIsModalOpen(true);
+    };
+
+    const toggleStatusFilter = () => {
+        if (statusFilter === 'All') setStatusFilter('Active');
+        else if (statusFilter === 'Active') setStatusFilter('Inactive');
+        else setStatusFilter('All');
+    };
+
+    const toggleStopsFilter = () => {
+        if (stopsFilter === 'Any') setStopsFilter('Short');
+        else if (stopsFilter === 'Short') setStopsFilter('Medium');
+        else if (stopsFilter === 'Medium') setStopsFilter('Long');
+        else setStopsFilter('Any');
     };
 
     return (
@@ -52,7 +159,7 @@ const RoutesPage: React.FC = () => {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleAddNewRoute}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                     >
                         <Plus size={20} strokeWidth={2.5} />
@@ -72,18 +179,30 @@ const RoutesPage: React.FC = () => {
                                 <input
                                     type="text"
                                     placeholder="Search routes..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                                 />
                             </div>
 
                             {/* Filter Buttons */}
                             <div className="flex gap-3">
-                                <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                                <button
+                                    onClick={toggleStatusFilter}
+                                    className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-sm font-medium transition-colors
+                                        ${statusFilter !== 'All' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                                    `}
+                                >
                                     <Filter size={18} />
-                                    <span>All Status</span>
+                                    <span>Status: {statusFilter}</span>
                                 </button>
-                                <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                                    <span>Any Stops</span>
+                                <button
+                                    onClick={toggleStopsFilter}
+                                    className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-sm font-medium transition-colors
+                                        ${stopsFilter !== 'Any' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                                    `}
+                                >
+                                    <span>Stops: {stopsFilter}</span>
                                 </button>
                             </div>
                         </div>
@@ -100,7 +219,7 @@ const RoutesPage: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {routes.map((route) => (
+                                    {filteredRoutes.map((route) => (
                                         <tr key={route.id} className="group hover:bg-blue-50/30 transition-colors">
 
                                             {/* Destination Column */}
@@ -115,7 +234,7 @@ const RoutesPage: React.FC = () => {
                                                             <ArrowRight size={14} className="text-slate-400" />
                                                             {route.destination}
                                                         </div>
-                                                        <div className="text-xs text-slate-500">{route.stops} stops</div>
+                                                        <div className="text-xs text-slate-500">{route.stopsList.length} stops</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -132,7 +251,7 @@ const RoutesPage: React.FC = () => {
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
                                                     ${route.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}
                                                 `}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full 
+                                                    <span className={`w-1.5 h-1.5 rounded-full
                                                         ${route.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-500'}
                                                     `}></span>
                                                     {route.status}
@@ -142,10 +261,18 @@ const RoutesPage: React.FC = () => {
                                             {/* Actions Column */}
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="View Details">
+                                                    <button
+                                                        onClick={() => handleViewDetails(route)}
+                                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                        title="View Details"
+                                                    >
                                                         <Eye size={18} />
                                                     </button>
-                                                    <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit Route">
+                                                    <button
+                                                        onClick={() => handleEditRoute(route)}
+                                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                        title="Edit Route"
+                                                    >
                                                         <Pencil size={18} />
                                                     </button>
                                                     <button
@@ -164,15 +291,6 @@ const RoutesPage: React.FC = () => {
                             </table>
                         </div>
 
-                        {/* Pagination Footer (Optional visual match) */}
-                        <div className="p-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
-                            <span>Showing 1-5 of 24 routes</span>
-                            <div className="flex gap-2">
-                                <button className="px-3 py-1 border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50">Previous</button>
-                                <button className="px-3 py-1 border border-slate-200 rounded hover:bg-slate-50">Next</button>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -180,9 +298,70 @@ const RoutesPage: React.FC = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSave={(data) => {
-                    console.log("Saving new route", data);
+                    if (editingRoute) {
+                        // Update existing route
+                        setRoutes(routes.map(r => r.id === editingRoute.id ? {
+                            ...r,
+                            routeNumber: data.routeNumber,
+                            origin: data.origin,
+                            originCoords: data.originCoords!,
+                            destination: data.destination,
+                            destinationCoords: data.destinationCoords!,
+                            status: data.status as 'Active' | 'Inactive',
+                            stopsList: data.stops.map(s => ({
+                                name: s.name,
+                                price: s.price,
+                                lat: s.lat!,
+                                lng: s.lng!
+                            }))
+                        } : r));
+                    } else {
+                        // Add new route
+                        const newRoute: BusRoute = {
+                            id: (routes.length + 1).toString(),
+                            routeNumber: data.routeNumber,
+                            origin: data.origin,
+                            originCoords: data.originCoords!,
+                            destination: data.destination,
+                            destinationCoords: data.destinationCoords!,
+                            status: data.status as 'Active' | 'Inactive',
+                            stopsList: data.stops.map(s => ({
+                                name: s.name,
+                                price: s.price,
+                                lat: s.lat!,
+                                lng: s.lng!
+                            }))
+                        };
+                        setRoutes([...routes, newRoute]);
+                    }
                     setIsModalOpen(false);
+                    setEditingRoute(null);
                 }}
+                isLoaded={isLoaded}
+                routeToEdit={editingRoute ? {
+                    routeNumber: editingRoute.routeNumber,
+                    origin: editingRoute.origin,
+                    originCoords: editingRoute.originCoords,
+                    destination: editingRoute.destination,
+                    destinationCoords: editingRoute.destinationCoords,
+                    status: editingRoute.status,
+                    stops: editingRoute.stopsList
+                } : undefined}
+            />
+
+            <RouteDetailsModal
+                isOpen={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                route={selectedRoute ? {
+                    routeNumber: selectedRoute.routeNumber,
+                    origin: selectedRoute.origin,
+                    originCoords: selectedRoute.originCoords,
+                    destination: selectedRoute.destination,
+                    destinationCoords: selectedRoute.destinationCoords,
+                    status: selectedRoute.status,
+                    stops: selectedRoute.stopsList
+                } : null}
+                isLoaded={isLoaded}
             />
         </Layout>
     );

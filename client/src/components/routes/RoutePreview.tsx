@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleMap, DirectionsRenderer } from '@react-google-maps/api';
+import { GoogleMap, DirectionsRenderer, Marker } from '@react-google-maps/api';
 
 export interface RouteMapPreviewProps {
     startPoint: { lat: number; lng: number } | null;
@@ -59,7 +59,70 @@ const RouteMapPreview: React.FC<RouteMapPreviewProps> = ({ startPoint, endPoint,
                     zoomControl: true,
                 }}
             >
-                {directions && <DirectionsRenderer directions={directions} />}
+                {directions && (
+                    <DirectionsRenderer
+                        directions={directions}
+                        options={{
+                            suppressMarkers: true,
+                            polylineOptions: {
+                                strokeColor: '#2563eb', // Blue-600
+                                strokeWeight: 5,
+                                strokeOpacity: 0.8
+                            }
+                        }}
+                    />
+                )}
+
+                {/* Start Marker - Premium Green Pin */}
+                {startPoint && (
+                    <Marker
+                        position={startPoint}
+                        icon={{
+                            path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+                            fillColor: "#10B981", // Emerald-500
+                            fillOpacity: 1,
+                            strokeWeight: 1,
+                            strokeColor: "#ffffff",
+                            scale: 1.5,
+                            anchor: new google.maps.Point(12, 22),
+                        }}
+                        title="Start Location"
+                    />
+                )}
+
+                {/* End Marker - Premium Red Pin */}
+                {endPoint && (
+                    <Marker
+                        position={endPoint}
+                        icon={{
+                            path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+                            fillColor: "#EF4444", // Red-500
+                            fillOpacity: 1,
+                            strokeWeight: 1,
+                            strokeColor: "#ffffff",
+                            scale: 1.5,
+                            anchor: new google.maps.Point(12, 22),
+                        }}
+                        title="End Location"
+                    />
+                )}
+
+                {/* Stops Markers - Sleek Blue Circles */}
+                {stops.map((stop, index) => (
+                    <Marker
+                        key={`stop-${index}`}
+                        position={stop}
+                        icon={{
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 6,
+                            fillColor: "#3B82F6", // Blue-500
+                            fillOpacity: 1,
+                            strokeWeight: 2,
+                            strokeColor: "#ffffff",
+                        }}
+                        title={`Stop ${index + 1}`}
+                    />
+                ))}
             </GoogleMap>
         </div>
     );

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
-import { useJsApiLoader } from '@react-google-maps/api';
 import LocationPicker, { type LocationData } from '../common/LocationPicker';
 import RouteMapPreview from './RoutePreview';
 
@@ -25,16 +24,11 @@ interface AddRouteModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (routeData: RouteData) => void;
+    isLoaded: boolean;
+    routeToEdit?: RouteData | null;
 }
 
-const libraries: ("places")[] = ["places"];
-
-const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }) => {
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
-        libraries,
-    });
+const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave, isLoaded, routeToEdit }) => {
 
     const [startPoint, setStartPoint] = useState("");
     const [startCoords, setStartCoords] = useState<{ lat: number, lng: number } | null>(null);
@@ -45,6 +39,29 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
     const [routeNumber, setRouteNumber] = useState("");
     const [status, setStatus] = useState("Active");
     const [stops, setStops] = useState<StopData[]>([]);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            if (routeToEdit) {
+                setRouteNumber(routeToEdit.routeNumber);
+                setStartPoint(routeToEdit.origin);
+                setStartCoords(routeToEdit.originCoords);
+                setEndPoint(routeToEdit.destination);
+                setEndCoords(routeToEdit.destinationCoords);
+                setStatus(routeToEdit.status);
+                setStops(routeToEdit.stops || []);
+            } else {
+                // Reset form for new route
+                setRouteNumber("");
+                setStartPoint("");
+                setStartCoords(null);
+                setEndPoint("");
+                setEndCoords(null);
+                setStatus("Active");
+                setStops([]);
+            }
+        }
+    }, [isOpen, routeToEdit]);
 
     if (!isOpen) return null;
 
@@ -107,8 +124,10 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
                 {/* Header */}
                 <div className="flex items-start justify-between p-6 border-b border-slate-100">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900">Add New Route</h2>
-                        <p className="text-slate-500 text-sm mt-1">Add a new route to your fleet. Click save when you're done.</p>
+                        <h2 className="text-xl font-bold text-slate-900">{routeToEdit ? "Edit Route" : "Add New Route"}</h2>
+                        <p className="text-slate-500 text-sm mt-1">
+                            {routeToEdit ? "Update the details of the route." : "Add a new route to your fleet. Click save when you're done."}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -260,7 +279,7 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
                         form="add-route-form"
                         className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/25 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                        Save Route
+                        {routeToEdit ? "Update Route" : "Save Route"}
                     </button>
                 </div>
 
