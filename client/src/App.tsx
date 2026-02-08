@@ -4,6 +4,8 @@ import Dashboard from './pages/Dashboard';
 import RoutesPage from './pages/RoutesPage';
 import Drivers from './pages/Drivers';
 import AddBus from './pages/AddBus';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 // Passenger Pages
 import PassengerDashboard from './pages/passenger/PassengerDashboard';
@@ -20,6 +22,8 @@ function App() {
         <Routes>
           {/* Admin Routes */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/trips" element={<RoutesPage />} />
           <Route path="/drivers" element={<Drivers />} />
