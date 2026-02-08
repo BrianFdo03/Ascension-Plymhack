@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import PassengerLayout from '../../components/passenger/PassengerLayout';
 import { Search, MapPin, Clock, Navigation, TrendingUp, Star } from 'lucide-react';
+import GoogleMap from '../../components/common/GoogleMap';
+import { routeService, trackingService } from '../../services/passengerService';
+import type { Route } from '../../services/passengerService';
 
 interface BusRoute {
     id: string;
@@ -14,26 +17,75 @@ interface BusRoute {
     rating: number;
 }
 
-const POPULAR_ROUTES: BusRoute[] = [
-    { id: '1', routeNo: '138', from: 'Pettah', to: 'Homagama', duration: '45 min', nextBus: '5 min', fare: 'Rs. 50', rating: 4.5 },
-    { id: '2', routeNo: '01', from: 'Colombo', to: 'Kandy', duration: '3 hrs', nextBus: '15 min', fare: 'Rs. 250', rating: 4.8 },
-    { id: '3', routeNo: '87', from: 'Colombo', to: 'Jaffna', duration: '8 hrs', nextBus: '30 min', fare: 'Rs. 800', rating: 4.3 },
-];
-
 const PassengerDashboard = () => {
     const navigate = useNavigate();
     const [startPoint, setStartPoint] = useState('');
     const [endPoint, setEndPoint] = useState('');
     const [searchResults, setSearchResults] = useState<BusRoute[]>([]);
+    const [popularRoutes, setPopularRoutes] = useState<BusRoute[]>([]);
+    const [busLocations, setBusLocations] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
 
-    const handleSearch = () => {
-        if (startPoint && endPoint) {
-            // Filter routes based on search
-            const results = POPULAR_ROUTES.filter(route => 
-                route.from.toLowerCase().includes(startPoint.toLowerCase()) &&
-                route.to.toLowerCase().includes(endPoint.toLowerCase())
-            );
-            setSearchResults(results);
+    // Fetch popular routes on component mount
+    useEffect(() => {
+        fetchPopularRoutes();
+        fetchBusLocations();
+    }, []);
+
+    const fetchPopularRoutes = async () => {
+        try {
+            const response = await routeService.getPopularRoutes();
+            const routes = response.data.map((route: Route) => ({
+                id: route._id,
+                routeNo: route.routeNo,
+                from: route.from,
+                to: route.to,
+                duration: route.duration,
+                nextBus: '5 min', // This should come from live bus data
+                fare: `Rs. ${route.fare}`,
+                rating: route.rating
+            }));
+            setPopularRoutes(routes);
+        } catch (error) {
+            console.error('Error fetching popular routes:', error);
+        }
+    };
+
+    const fetchBusLocations = async () => {
+        try {
+            const response = await trackingService.getBusLocations();
+            const locations = response.data.map((bus: any) => ({
+                lat: bus.lat,
+                lng: bus.lng,
+                label: bus.label
+            }));
+            setBusLocations(locations);
+        } catch (error) {
+            console.error('Error fetching bus locations:', error);
+        }
+    };
+
+    const handleSearch = async () => {
+        if (startPoint || endPoint) {
+            setLoading(true);
+            try {
+                const response = await routeService.searchRoutes(startPoint, endPoint, 'rating');
+                const routes = response.data.map((route: Route) => ({
+                    id: route._id,
+                    routeNo: route.routeNo,
+                    from: route.from,
+                    to: route.to,
+                    duration: route.duration,
+                    nextBus: '5 min',
+                    fare: `Rs. ${route.fare}`,
+                    rating: route.rating
+                }));
+                setSearchResults(routes);
+            } catch (error) {
+                console.error('Error searching routes:', error);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -94,10 +146,11 @@ const PassengerDashboard = () => {
                             </div>
                             <button
                                 onClick={handleSearch}
-                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                                disabled={loading}
+                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Search size={22} />
-                                <span className="text-base">Search Routes</span>
+                                <span className="text-base">{loading ? 'Searching...' : 'Search Routes'}</span>
                             </button>
                         </div>
 
@@ -173,19 +226,28 @@ const PassengerDashboard = () => {
                     </div>
                 )}
 
-                {/* Google Map Placeholder */}
+                {/* Google Map */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-xl font-bold text-gray-900">Live Bus Tracking</h2>
-                        <p className="text-sm text-gray-500 mt-1">Track buses in real-time on the map</p>
-                    </div>
-                    <div className="h-96 bg-gray-100 flex items-center justify-center">
-                        <div className="text-center">
-                            <MapPin size={48} className="text-gray-400 mx-auto mb-3" />
-                            <p className="text-gray-500 font-medium">Google Maps Integration</p>
-                            <p className="text-sm text-gray-400 mt-1">Map will be displayed here</p>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">Live Bus Tracking</h2>
+                                <p className="text-sm text-gray-500 mt-1">Track buses in real-time on the map</p>
+                            </div>
+                            <button
+                                onClick={() => navigate('/passenger/tracking')}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                            >
+                                View Full Map
+                            </button>
                         </div>
                     </div>
+                    <GoogleMap
+                        center={{ lat: 6.9271, lng: 79.8612 }}
+                        markers={busLocations.length > 0 ? busLocations : [{ lat: 6.9271, lng: 79.8612, label: 'Colombo' }]}
+                        zoom={12}
+                        height="400px"
+                    />
                 </div>
 
                 {/* Popular Routes */}
@@ -195,7 +257,7 @@ const PassengerDashboard = () => {
                         <h2 className="text-xl font-bold text-gray-900">Popular Routes</h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {POPULAR_ROUTES.map((route) => (
+                        {popularRoutes.map((route) => (
                             <div 
                                 key={route.id} 
                                 onClick={() => handleBookSeats(route)}

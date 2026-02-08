@@ -6,11 +6,11 @@ import {
     Clock,
     Ticket,
     Heart,
-    Bell,
     User
 } from 'lucide-react';
 
 import { useNavigate, useLocation } from 'react-router';
+import { NotificationBell } from '../common/NotificationBell';
 
 interface NavItem {
     label: string;
@@ -40,7 +40,6 @@ const PassengerSidebar: React.FC<PassengerSidebarProps> = ({
     ];
 
     const bottomNavItems: NavItem[] = [
-        { label: 'Notifications', icon: Bell, href: '/passenger/notifications' },
         { label: 'Profile', icon: User, href: '/passenger/profile' },
     ];
 
@@ -54,11 +53,14 @@ const PassengerSidebar: React.FC<PassengerSidebarProps> = ({
         <aside className="flex flex-col w-64 h-screen px-5 py-8 bg-white border-r border-blue-100 text-blue-900 shadow-xl">
 
             {/* Brand Logo */}
-            <div className="mb-10 px-2">
-                <h1 className="text-2xl font-serif font-bold tracking-wide text-[#2563EB]">
-                    GoBus
-                </h1>
-                <p className="text-xs text-gray-500 mt-1">Passenger Portal</p>
+            <div className="mb-10 px-2 flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-serif font-bold tracking-wide text-[#2563EB]">
+                        GoBus
+                    </h1>
+                    <p className="text-xs text-gray-500 mt-1">Passenger Portal</p>
+                </div>
+                <NotificationBell />
             </div>
 
             {/* Main Navigation */}

@@ -34,6 +34,48 @@ const routeSchema = new mongoose.Schema({
         type: String,
         enum: ['Active', 'Inactive'],
         default: 'Active'
+    },
+    // Legacy fields for backward compatibility
+    routeNo: {
+        type: String
+    },
+    from: {
+        type: String
+    },
+    to: {
+        type: String
+    },
+    duration: {
+        type: String
+    },
+    fare: {
+        type: Number
+    },
+    rating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5
+    },
+    stops: {
+        type: Number,
+        default: 0
+    },
+    frequency: {
+        type: String,
+        default: 'Every 30 min'
+    },
+    totalSeats: {
+        type: Number,
+        default: 53
+    },
+    accessibleSeats: {
+        type: Number,
+        default: 4
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
 }, {
     timestamps: true

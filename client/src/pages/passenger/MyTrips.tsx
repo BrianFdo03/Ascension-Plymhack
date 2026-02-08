@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import PassengerLayout from '../../components/passenger/PassengerLayout';
 import { Clock, MapPin, Calendar, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { bookingService } from '../../services/passengerService';
+import type { Booking } from '../../services/passengerService';
 
 interface Trip {
     id: string;
@@ -12,14 +15,37 @@ interface Trip {
     status: 'completed' | 'cancelled' | 'upcoming';
 }
 
-const TRIPS: Trip[] = [
-    { id: '1', routeNo: '138', from: 'Pettah', to: 'Homagama', date: '2026-02-08', time: '08:30 AM', fare: 'Rs. 50', status: 'upcoming' },
-    { id: '2', routeNo: '01', from: 'Colombo', to: 'Kandy', date: '2026-02-05', time: '10:00 AM', fare: 'Rs. 250', status: 'completed' },
-    { id: '3', routeNo: '87', from: 'Colombo', to: 'Jaffna', date: '2026-02-01', time: '06:00 AM', fare: 'Rs. 800', status: 'completed' },
-    { id: '4', routeNo: '122', from: 'Pettah', to: 'Avissawella', date: '2026-01-28', time: '03:00 PM', fare: 'Rs. 65', status: 'cancelled' },
-];
-
 const MyTrips = () => {
+    const [trips, setTrips] = useState<Trip[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        fetchBookings();
+    }, []);
+
+    const fetchBookings = async () => {
+        setLoading(true);
+        try {
+            const response = await bookingService.getAllBookings();
+            const bookings = response.data.map((booking: Booking) => ({
+                id: booking._id,
+                routeNo: booking.routeNo,
+                from: booking.from,
+                to: booking.to,
+                date: booking.date,
+                time: booking.time,
+                fare: `Rs. ${booking.totalAmount}`,
+                status: booking.status
+            }));
+            setTrips(bookings);
+        } catch (error) {
+            console.error('Error fetching bookings:', error);
+            // If API fails, show empty state
+            setTrips([]);
+        } finally {
+            setLoading(false);
+        }
+    };
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'completed':
@@ -46,8 +72,18 @@ const MyTrips = () => {
         }
     };
 
-    const upcomingTrips = TRIPS.filter(trip => trip.status === 'upcoming');
-    const pastTrips = TRIPS.filter(trip => trip.status !== 'upcoming');
+    const upcomingTrips = trips.filter(trip => trip.status === 'upcoming');
+    const pastTrips = trips.filter(trip => trip.status !== 'upcoming');
+
+    if (loading) {
+        return (
+            <PassengerLayout>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-lg text-gray-600">Loading trips...</div>
+                </div>
+            </PassengerLayout>
+        );
+    }
 
     return (
         <PassengerLayout>
@@ -145,14 +181,14 @@ const MyTrips = () => {
                             <MapPin size={24} />
                             <span className="text-sm font-medium opacity-90">Total Trips</span>
                         </div>
-                        <div className="text-4xl font-bold">{TRIPS.length}</div>
+                        <div className="text-4xl font-bold">{trips.length}</div>
                     </div>
                     <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
                         <div className="flex items-center gap-3 mb-2">
                             <CheckCircle size={24} />
                             <span className="text-sm font-medium opacity-90">Completed</span>
                         </div>
-                        <div className="text-4xl font-bold">{TRIPS.filter(t => t.status === 'completed').length}</div>
+                        <div className="text-4xl font-bold">{trips.filter(t => t.status === 'completed').length}</div>
                     </div>
                     <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
                         <div className="flex items-center gap-3 mb-2">

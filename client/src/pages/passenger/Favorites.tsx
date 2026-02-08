@@ -112,7 +112,7 @@ const Favorites = () => {
                         </div>
                         <div>
                             <div className="text-3xl font-bold">
-                                {favorites.reduce((sum, route) => sum + parseFloat(route.rating), 0) / favorites.length || 0}
+                                {(favorites.reduce((sum, route) => sum + route.rating, 0) / favorites.length || 0).toFixed(1)}
                             </div>
                             <div className="text-sm opacity-90">Avg Rating</div>
                         </div>
