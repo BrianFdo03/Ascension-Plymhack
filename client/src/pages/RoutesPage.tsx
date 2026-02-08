@@ -3,6 +3,7 @@ import {
     Plus,
     Search,
     Filter,
+    Eye,
     MoreHorizontal,
     Pencil,
     Trash2,
@@ -10,6 +11,7 @@ import {
     ArrowRight
 } from 'lucide-react';
 import Layout from "../components/layout/Layout";
+import AddRouteModal from '../components/routes/AddRouteModal';
 
 // Define the shape of a Route object
 interface BusRoute {
@@ -22,6 +24,8 @@ interface BusRoute {
 }
 
 const RoutesPage: React.FC = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     // Mock Data for Routes
     const [routes, setRoutes] = useState<BusRoute[]>([
         { id: '1', routeNumber: '17', origin: 'Panadura', destination: 'Kandy', stops: 24, status: 'Active' },
@@ -48,7 +52,10 @@ const RoutesPage: React.FC = () => {
                         <p className="text-slate-500 text-sm mt-1">Manage your fleet destinations and schedules.</p>
                     </div>
 
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    >
                         <Plus size={20} strokeWidth={2.5} />
                         Add Route
                     </button>
@@ -140,6 +147,9 @@ const RoutesPage: React.FC = () => {
                                             {/* Actions Column */}
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="View Details">
+                                                        <Eye size={18} />
+                                                    </button>
                                                     <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit Route">
                                                         <Pencil size={18} />
                                                     </button>
@@ -171,6 +181,14 @@ const RoutesPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+            <AddRouteModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={(data) => {
+                    console.log("Saving new route", data);
+                    setIsModalOpen(false);
+                }}
+            />
         </Layout>
     );
 };

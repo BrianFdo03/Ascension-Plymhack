@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import Layout from "../components/layout/Layout";
 import DashboardStats from "../components/dashboard/DashboardStats";
-import RecentOrders from "../components/dashboard/RecentOrders";
+import RevenueCharts from "../components/dashboard/RevenueCharts";
 import { Button } from "../components/common/Button";
+import HighRevenueRoutes from '../components/dashboard/highRevenueRoutes';
 
 const Dashboard = () => {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -28,7 +29,8 @@ const Dashboard = () => {
       }
     >
       <DashboardStats refreshKey={refreshKey} />
-      <RecentOrders />
+      <HighRevenueRoutes />
+      <RevenueCharts />
     </Layout>
   );
 };
