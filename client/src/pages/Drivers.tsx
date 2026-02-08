@@ -1,4 +1,4 @@
-import Layout from "../components/layout/Layout";
+﻿import Layout from "../components/layout/Layout";
 import { Filter, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
@@ -17,6 +17,16 @@ const Drivers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newDriver, setNewDriver] = useState<Omit<Driver, 'id'>>({
+    name: "",
+    licenseNumber: "",
+    nic: "",
+    dateOfBirth: "",
+    address: "",
+    phone: "",
+    email: "",
+  });
 
   // Mock data - replace with actual data from API
   const [drivers, setDrivers] = useState<Driver[]>([
@@ -98,6 +108,53 @@ const Drivers = () => {
     }
   };
 
+  // Handle add driver
+  const handleAddDriver = () => {
+    setIsAddModalOpen(true);
+  };
+
+  // Handle save new driver
+  const handleSaveNewDriver = () => {
+    if (newDriver.name && newDriver.licenseNumber && newDriver.nic) {
+      const driverToAdd: Driver = {
+        ...newDriver,
+        id: Math.max(...drivers.map(d => d.id), 0) + 1,
+      };
+      setDrivers([...drivers, driverToAdd]);
+      setIsAddModalOpen(false);
+      // Reset form
+      setNewDriver({
+        name: "",
+        licenseNumber: "",
+        nic: "",
+        dateOfBirth: "",
+        address: "",
+        phone: "",
+        email: "",
+      });
+    }
+  };
+
+  // Handle cancel add
+  const handleCancelAdd = () => {
+    setIsAddModalOpen(false);
+    // Reset form
+    setNewDriver({
+      name: "",
+      licenseNumber: "",
+      nic: "",
+      dateOfBirth: "",
+      address: "",
+      phone: "",
+      email: "",
+    });
+  };
+
+  // Handle new driver input change
+  const handleNewDriverInputChange = (field: keyof Omit<Driver, 'id'>, value: string) => {
+    setNewDriver({ ...newDriver, [field]: value });
+  };
+
   // Filter drivers based on search query
   const filteredDrivers = drivers.filter((driver) => {
     const query = searchQuery.toLowerCase();
@@ -114,6 +171,142 @@ const Drivers = () => {
   return (
     <Layout title="Drivers">
       <div className="space-y-6">
+        {/* Add Driver Modal */}
+        {isAddModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-900">Add New Driver</h2>
+                <button
+                  onClick={handleCancelAdd}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Driver Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Driver Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newDriver.name}
+                      onChange={(e) => handleNewDriverInputChange('name', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter driver name"
+                    />
+                  </div>
+
+                  {/* License Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      License Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newDriver.licenseNumber}
+                      onChange={(e) => handleNewDriverInputChange('licenseNumber', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="DL-XXXXXX"
+                    />
+                  </div>
+
+                  {/* NIC */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      NIC <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newDriver.nic}
+                      onChange={(e) => handleNewDriverInputChange('nic', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="XXXXXXXXXV"
+                    />
+                  </div>
+
+                  {/* Date of Birth */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      value={newDriver.dateOfBirth}
+                      onChange={(e) => handleNewDriverInputChange('dateOfBirth', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={newDriver.phone}
+                      onChange={(e) => handleNewDriverInputChange('phone', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={newDriver.email}
+                      onChange={(e) => handleNewDriverInputChange('email', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="driver@email.com"
+                    />
+                  </div>
+                </div>
+
+                {/* Address - Full width */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Address
+                  </label>
+                  <textarea
+                    value={newDriver.address}
+                    onChange={(e) => handleNewDriverInputChange('address', e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter full address"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                <button
+                  onClick={handleCancelAdd}
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveNewDriver}
+                  className="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1d4ed8] text-white rounded-lg font-medium transition-colors"
+                >
+                  Add Driver
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Edit Modal */}
         {isEditModalOpen && editingDriver && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -247,7 +440,10 @@ const Drivers = () => {
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Drivers</h1>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-[#1d4ed8] text-white rounded-lg font-medium transition-colors shadow-sm">
+          <button 
+            onClick={handleAddDriver}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-[#1d4ed8] text-white rounded-lg font-medium transition-colors shadow-sm"
+          >
             <span className="text-xl">+</span>
             Add Driver
           </button>
