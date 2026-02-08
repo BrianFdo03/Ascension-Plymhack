@@ -6,11 +6,18 @@ export interface RouteMapPreviewProps {
     endPoint: { lat: number; lng: number } | null;
     stops: { lat: number; lng: number }[];
     isLoaded: boolean;
+    onDirectionsLoaded?: (details: {
+        distanceValue: number;
+        distanceText: string;
+        durationValue: number;
+        durationText: string;
+    }) => void;
 }
 
 const mapContainerStyle = {
     width: '100%',
-    height: '300px',
+    height: '100%',
+    minHeight: '300px',
     borderRadius: '12px'
 };
 
@@ -19,7 +26,7 @@ const defaultCenter = {
     lng: 79.8612
 };
 
-const RouteMapPreview: React.FC<RouteMapPreviewProps> = ({ startPoint, endPoint, stops, isLoaded }) => {
+const RouteMapPreview: React.FC<RouteMapPreviewProps> = ({ startPoint, endPoint, stops, isLoaded, onDirectionsLoaded }) => {
     const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
 
     useEffect(() => {
@@ -37,19 +44,49 @@ const RouteMapPreview: React.FC<RouteMapPreviewProps> = ({ startPoint, endPoint,
                 waypoints: waypoints,
                 travelMode: google.maps.TravelMode.DRIVING
             }, (result, status) => {
-                if (status === google.maps.DirectionsStatus.OK) {
+                if (status === google.maps.DirectionsStatus.OK && result) {
                     setDirections(result);
+
+                    // Extract distance and duration from the first leg (or sum of legs if multiple)
+                    // For simplicity, we'll take the first route's total info
+                    const route = result.routes[0];
+                    let totalDistance = 0;
+                    let totalDuration = 0;
+
+                    if (route && route.legs) {
+                        route.legs.forEach(leg => {
+                            totalDistance += leg.distance?.value || 0;
+                            totalDuration += leg.duration?.value || 0;
+                        });
+
+                        // Calculate duration text
+                        const hours = Math.floor(totalDuration / 3600);
+                        const minutes = Math.round((totalDuration % 3600) / 60);
+                        const durationText = hours > 0
+                            ? `${hours} hr ${minutes} min`
+                            : `${minutes} min`;
+
+                        // Call parent callback if provided
+                        if (onDirectionsLoaded) {
+                            onDirectionsLoaded({
+                                distanceValue: totalDistance, // in meters
+                                distanceText: (totalDistance / 1000).toFixed(1) + " km",
+                                durationValue: totalDuration, // in seconds
+                                durationText: durationText
+                            });
+                        }
+                    }
                 } else {
                     console.error(`error fetching directions ${result}`);
                 }
             });
         }
-    }, [isLoaded, startPoint, endPoint, stops]);
+    }, [isLoaded, startPoint, endPoint, stops, onDirectionsLoaded]);
 
-    if (!isLoaded) return <div className="h-[300px] bg-slate-100 rounded-xl animate-pulse flex items-center justify-center text-slate-400">Loading Map...</div>;
+    if (!isLoaded) return <div className="h-full min-h-[300px] bg-slate-100 rounded-xl animate-pulse flex items-center justify-center text-slate-400">Loading Map...</div>;
 
     return (
-        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="h-full min-h-[300px] border border-slate-200 rounded-xl overflow-hidden shadow-sm">
             <GoogleMap
                 mapContainerStyle={mapContainerStyle}
                 center={defaultCenter}
