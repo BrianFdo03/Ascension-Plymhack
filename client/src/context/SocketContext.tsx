@@ -22,7 +22,7 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        const socketInstance = io('http://localhost:3000');
+        const socketInstance = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001');
 
         socketInstance.on('connect', () => {
             console.log('Connected to WebSocket server');
@@ -31,6 +31,11 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
 
         socketInstance.on('disconnect', () => {
             console.log('Disconnected from WebSocket server');
+            setIsConnected(false);
+        });
+
+        socketInstance.on('connect_error', (error) => {
+            console.error('WebSocket connection error:', error);
             setIsConnected(false);
         });
 
