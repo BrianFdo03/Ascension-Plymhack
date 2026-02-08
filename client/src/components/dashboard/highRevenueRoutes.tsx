@@ -31,7 +31,7 @@ const highRevenueRoutes: Route[] = [
     revenue: "LKR 500.00",
   },
   {
-    id: "#R-7349",
+    id: "R-7349",
     routeNo: 101,
     routeName: "Panadura - Mt. Lavinia",
     noBuses: 10,
