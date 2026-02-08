@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Layout from '../components/layout/Layout';
-import { Bus, User, MapPin, Search, Filter, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Bus, User, MapPin, Search, Filter, Plus, Edit2, Trash2, X, Clock } from 'lucide-react';
 
 interface BusData {
     id: string;
@@ -8,6 +8,7 @@ interface BusData {
     driver: string;
     route: string;
     routeNo: string;
+    departureTime: string;
     status: 'Active' | 'Inactive' | 'Maintenance';
 }
 
@@ -25,10 +26,10 @@ const MOCK_ROUTES = [
 ];
 
 const MOCK_BUSES: BusData[] = [
-    { id: '1', numberPlate: 'WP NB-1234', driver: 'Sunil Perera', route: 'Pettah - Homagama', routeNo: '#138', status: 'Active' },
-    { id: '2', numberPlate: 'WP CAA-5678', driver: 'Wimal Kumara', route: 'Colombo - Kandy', routeNo: '#01', status: 'Active' },
-    { id: '3', numberPlate: 'WP KA-9012', driver: 'Nimal Silva', route: 'Colombo - Jaffna', routeNo: '#87', status: 'Maintenance' },
-    { id: '4', numberPlate: 'WP QB-3456', driver: 'Sunil Perera', route: 'Pettah - Avissawella', routeNo: '#122', status: 'Inactive' },
+    { id: '1', numberPlate: 'WP NB-1234', driver: 'Sunil Perera', route: 'Pettah - Homagama', routeNo: '#138', departureTime: '08:30 AM', status: 'Active' },
+    { id: '2', numberPlate: 'WP CAA-5678', driver: 'Wimal Kumara', route: 'Colombo - Kandy', routeNo: '#01', departureTime: '10:00 AM', status: 'Active' },
+    { id: '3', numberPlate: 'WP KA-9012', driver: 'Nimal Silva', route: 'Colombo - Jaffna', routeNo: '#87', departureTime: '06:00 AM', status: 'Maintenance' },
+    { id: '4', numberPlate: 'WP QB-3456', driver: 'Sunil Perera', route: 'Pettah - Avissawella', routeNo: '#122', departureTime: '03:00 PM', status: 'Inactive' },
 ];
 
 const AddBus = () => {
@@ -38,7 +39,8 @@ const AddBus = () => {
     const [formData, setFormData] = useState({
         numberPlate: '',
         driverId: '',
-        routeId: ''
+        routeId: '',
+        departureTime: ''
     });
 
     const filteredBuses = MOCK_BUSES.filter(bus => {
@@ -65,8 +67,8 @@ const AddBus = () => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         console.log('Form submitted:', formData);
-        alert(`Successfully added bus: ${formData.numberPlate}`);
-        setFormData({ numberPlate: '', driverId: '', routeId: '' });
+        alert(`Successfully added bus: ${formData.numberPlate}\nDeparture Time: ${formData.departureTime}`);
+        setFormData({ numberPlate: '', driverId: '', routeId: '', departureTime: '' });
         setShowAddModal(false);
     };
 
@@ -164,6 +166,25 @@ const AddBus = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Departure Time */}
+                                <div className="relative group">
+                                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                                        Departure Time
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <Clock size={18} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="time"
+                                            required
+                                            className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+                                            value={formData.departureTime}
+                                            onChange={(e) => setFormData({ ...formData, departureTime: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Modal Footer */}
@@ -245,6 +266,9 @@ const AddBus = () => {
                                     Route No
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Departure Time
+                                </th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Status
                                 </th>
                                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -277,6 +301,12 @@ const AddBus = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="text-sm font-medium text-gray-900">{bus.routeNo}</span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <Clock size={16} className="text-gray-400" />
+                                            <span className="text-sm font-medium text-gray-900">{bus.departureTime}</span>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${getStatusStyle(bus.status)}`}>

@@ -4,7 +4,8 @@ import {
     LayoutDashboard,
     Route,
     Users,
-    Bus
+    Bus,
+    UserCircle
 } from 'lucide-react';
 
 interface NavItem {
@@ -32,6 +33,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         { label: 'Routes', icon: Route, href: '/routes' },
         { label: 'Drivers', icon: Users, href: '/drivers' },
         { label: 'Add Bus', icon: Bus, href: '/add-bus' },
+    ];
+
+    const bottomNavItems: NavItem[] = [
+        { label: 'Passenger Portal', icon: UserCircle, href: '/passenger' },
     ];
 
     const handleNavClick = (path: string) => {
@@ -96,6 +101,43 @@ const Sidebar: React.FC<SidebarProps> = ({
                     );
                 })}
             </nav>
+
+            {/* Passenger Portal Link */}
+            <div className="px-4 pb-4">
+                {bottomNavItems.map((item) => {
+                    const isActive = activePath === item.href;
+                    const Icon = item.icon;
+
+                    return (
+                        <Link
+                            key={item.href}
+                            to={item.href}
+                            onClick={() => handleNavClick(item.href)}
+                            className={`
+                                group relative w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium rounded-2xl transition-all duration-300 ease-out overflow-hidden
+                                ${isActive
+                                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/25'
+                                    : 'bg-gradient-to-r from-purple-50 to-blue-50 text-purple-700 hover:from-purple-100 hover:to-blue-100 hover:shadow-md'
+                                }
+                            `}
+                        >
+                            <Icon
+                                size={22}
+                                className={`
+                                    relative z-10 transition-transform duration-300
+                                    ${isActive
+                                        ? 'text-white scale-110'
+                                        : 'text-purple-600 group-hover:scale-110'
+                                    }
+                                `}
+                            />
+                            <span className="relative z-10 font-semibold tracking-wide">
+                                {item.label}
+                            </span>
+                        </Link>
+                    );
+                })}
+            </div>
 
             {/* Footer / User Profile Area - New Premium Addition */}
             <div className="p-5 border-t border-slate-100 bg-slate-50/50">
