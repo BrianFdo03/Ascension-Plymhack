@@ -1,0 +1,261 @@
+{
+  "info": {
+    "name": "Passenger API",
+    "description": "API endpoints for passenger-side bus booking system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Routes",
+      "item": [
+        {
+          "name": "Get All Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/routes",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "routes"]
+            }
+          }
+        },
+        {
+          "name": "Search Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/routes/search?from=Colombo&to=Kandy&sortBy=rating",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "routes", "search"],
+              "query": [
+                {"key": "from", "value": "Colombo"},
+                {"key": "to", "value": "Kandy"},
+                {"key": "sortBy", "value": "rating"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Popular Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/routes/popular",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "routes", "popular"]
+            }
+          }
+        },
+        {
+          "name": "Get Route by Number",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/routes/number/138",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "routes", "number", "138"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"507f1f77bcf86cd799439011\",\n  \"routeNo\": \"138\",\n  \"from\": \"Pettah\",\n  \"to\": \"Homagama\",\n  \"date\": \"2026-02-08\",\n  \"time\": \"08:30 AM\",\n  \"seats\": [\n    {\"seatNumber\": 12, \"isAccessible\": false},\n    {\"seatNumber\": 13, \"isAccessible\": false}\n  ],\n  \"fare\": 50\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/bookings",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get All Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/bookings",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get Upcoming Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/bookings/upcoming",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "bookings", "upcoming"]
+            }
+          }
+        },
+        {
+          "name": "Get Booking Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/bookings/stats",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "bookings", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "item": [
+        {
+          "name": "Add Favorite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"507f1f77bcf86cd799439011\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/favorites",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "favorites"]
+            }
+          }
+        },
+        {
+          "name": "Get All Favorites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/favorites",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "favorites"]
+            }
+          }
+        },
+        {
+          "name": "Get Favorite Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/favorites/stats",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "favorites", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tracking",
+      "item": [
+        {
+          "name": "Get All Live Buses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/tracking/buses",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "tracking", "buses"]
+            }
+          }
+        },
+        {
+          "name": "Get Bus Locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/tracking/locations",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "tracking", "locations"]
+            }
+          }
+        },
+        {
+          "name": "Get Nearby Buses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/tracking/nearby?lat=6.9271&lng=79.8612&radius=5",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "tracking", "nearby"],
+              "query": [
+                {"key": "lat", "value": "6.9271"},
+                {"key": "lng", "value": "79.8612"},
+                {"key": "radius", "value": "5"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Bus Occupancy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/passenger/tracking/occupancy",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "passenger", "tracking", "occupancy"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon --legacy-watch src/index.js"
+    "dev": "nodemon --legacy-watch src/index.js",
+    "seed": "node src/utils/seedData.js"
   },
   "author": "",
   "license": "ISC",

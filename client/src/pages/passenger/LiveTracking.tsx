@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PassengerLayout from '../../components/passenger/PassengerLayout';
 import { MapPin, Bus, Clock, Users, TrendingUp } from 'lucide-react';
 import GoogleMap from '../../components/common/GoogleMap';
+import { trackingService } from '../../services/passengerService';
 
 interface LiveBus {
     id: string;
@@ -14,21 +15,52 @@ interface LiveBus {
     speed: string;
 }
 
-const LIVE_BUSES: LiveBus[] = [
-    { id: '1', routeNo: '138', currentLocation: 'Nugegoda', nextStop: 'Maharagama', eta: '5 min', passengers: 35, capacity: 50, speed: '45 km/h' },
-    { id: '2', routeNo: '01', currentLocation: 'Kaduwela', nextStop: 'Malabe', eta: '8 min', passengers: 42, capacity: 50, speed: '50 km/h' },
-    { id: '3', routeNo: '87', currentLocation: 'Kiribathgoda', nextStop: 'Kadawatha', eta: '12 min', passengers: 28, capacity: 50, speed: '40 km/h' },
-];
-
-// Bus locations on map (Colombo area)
-const BUS_LOCATIONS = [
-    { lat: 6.8649, lng: 79.8997, label: 'Route 138 - Nugegoda' },
-    { lat: 6.9334, lng: 79.9800, label: 'Route 01 - Kaduwela' },
-    { lat: 6.9897, lng: 79.9219, label: 'Route 87 - Kiribathgoda' },
-];
-
 const LiveTracking = () => {
     const [selectedRoute, setSelectedRoute] = useState<string>('');
+    const [liveBuses, setLiveBuses] = useState<LiveBus[]>([]);
+    const [busLocations, setBusLocations] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        fetchLiveBuses();
+        fetchBusLocations();
+    }, []);
+
+    const fetchLiveBuses = async () => {
+        setLoading(true);
+        try {
+            const response = await trackingService.getAllLiveBuses();
+            const buses = response.data.map((bus: any) => ({
+                id: bus._id,
+                routeNo: bus.routeNo,
+                currentLocation: bus.currentLocation?.name || 'Unknown',
+                nextStop: bus.nextStop || 'Unknown',
+                eta: bus.eta || 'N/A',
+                passengers: bus.passengers || 0,
+                capacity: bus.capacity || 50,
+                speed: bus.speed || '0 km/h'
+            }));
+            setLiveBuses(buses);
+        } catch (error) {
+            console.error('Error fetching live buses:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchBusLocations = async () => {
+        try {
+            const response = await trackingService.getBusLocations();
+            const locations = response.data.map((bus: any) => ({
+                lat: bus.lat,
+                lng: bus.lng,
+                label: bus.label
+            }));
+            setBusLocations(locations);
+        } catch (error) {
+            console.error('Error fetching bus locations:', error);
+        }
+    };
 
     const getOccupancyColor = (passengers: number, capacity: number) => {
         const percentage = (passengers / capacity) * 100;
@@ -70,7 +102,7 @@ const LiveTracking = () => {
                     </div>
                     <GoogleMap
                         center={{ lat: 6.9271, lng: 79.8612 }}
-                        markers={BUS_LOCATIONS}
+                        markers={busLocations.length > 0 ? busLocations : [{ lat: 6.9271, lng: 79.8612, label: 'Colombo' }]}
                         zoom={12}
                         height="500px"
                     />
@@ -84,7 +116,10 @@ const LiveTracking = () => {
                     </div>
 
                     <div className="space-y-3">
-                        {LIVE_BUSES.map((bus) => (
+                        {loading ? (
+                            <div className="text-center py-8 text-gray-500">Loading buses...</div>
+                        ) : liveBuses.length > 0 ? (
+                            liveBuses.map((bus) => (
                             <div key={bus.id} className="p-5 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-100 hover:shadow-md transition-all">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4 flex-1">
@@ -123,7 +158,10 @@ const LiveTracking = () => {
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        ))
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">No buses available</div>
+                        )}
                     </div>
                 </div>
 

@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import PassengerLayout from '../../components/passenger/PassengerLayout';
 import { Search, MapPin, Navigation, Clock, Star, Filter, ArrowRight } from 'lucide-react';
+import { routeService } from '../../services/passengerService';
+import type { Route } from '../../services/passengerService';
 
 interface BusRoute {
     id: string;
@@ -16,44 +18,65 @@ interface BusRoute {
     frequency: string;
 }
 
-const ALL_ROUTES: BusRoute[] = [
-    { id: '1', routeNo: '138', from: 'Pettah', to: 'Homagama', duration: '45 min', nextBus: '5 min', fare: 'Rs. 50', rating: 4.5, stops: 18, frequency: 'Every 10 min' },
-    { id: '2', routeNo: '01', from: 'Colombo', to: 'Kandy', duration: '3 hrs', nextBus: '15 min', fare: 'Rs. 250', rating: 4.8, stops: 43, frequency: 'Every 30 min' },
-    { id: '3', routeNo: '87', from: 'Colombo', to: 'Jaffna', duration: '8 hrs', nextBus: '30 min', fare: 'Rs. 800', rating: 4.3, stops: 45, frequency: 'Every 2 hrs' },
-    { id: '4', routeNo: '122', from: 'Pettah', to: 'Avissawella', duration: '1 hr', nextBus: '8 min', fare: 'Rs. 65', rating: 4.2, stops: 32, frequency: 'Every 15 min' },
-    { id: '5', routeNo: '177', from: 'Kollupitiya', to: 'Kaduwela', duration: '50 min', nextBus: '12 min', fare: 'Rs. 55', rating: 4.6, stops: 25, frequency: 'Every 12 min' },
-];
-
 const SearchRoutes = () => {
     const navigate = useNavigate();
     const [startPoint, setStartPoint] = useState('');
     const [endPoint, setEndPoint] = useState('');
-    const [searchResults, setSearchResults] = useState<BusRoute[]>(ALL_ROUTES);
+    const [searchResults, setSearchResults] = useState<BusRoute[]>([]);
     const [sortBy, setSortBy] = useState<'fare' | 'duration' | 'rating'>('rating');
+    const [loading, setLoading] = useState(false);
 
-    const handleSearch = () => {
-        let results = ALL_ROUTES;
-        
-        if (startPoint || endPoint) {
-            results = ALL_ROUTES.filter(route => {
-                const matchStart = !startPoint || route.from.toLowerCase().includes(startPoint.toLowerCase());
-                const matchEnd = !endPoint || route.to.toLowerCase().includes(endPoint.toLowerCase());
-                return matchStart && matchEnd;
-            });
+    // Fetch all routes on component mount
+    useEffect(() => {
+        fetchAllRoutes();
+    }, []);
+
+    const fetchAllRoutes = async () => {
+        setLoading(true);
+        try {
+            const response = await routeService.getAllRoutes();
+            const routes = response.data.map((route: Route) => ({
+                id: route._id,
+                routeNo: route.routeNo,
+                from: route.from,
+                to: route.to,
+                duration: route.duration,
+                nextBus: '8 min',
+                fare: `Rs. ${route.fare}`,
+                rating: route.rating,
+                stops: route.stops,
+                frequency: route.frequency
+            }));
+            setSearchResults(routes);
+        } catch (error) {
+            console.error('Error fetching routes:', error);
+        } finally {
+            setLoading(false);
         }
+    };
 
-        // Sort results
-        results = [...results].sort((a, b) => {
-            if (sortBy === 'fare') {
-                return parseInt(a.fare.replace(/\D/g, '')) - parseInt(b.fare.replace(/\D/g, ''));
-            } else if (sortBy === 'duration') {
-                return parseInt(a.duration) - parseInt(b.duration);
-            } else {
-                return b.rating - a.rating;
-            }
-        });
-
-        setSearchResults(results);
+    const handleSearch = async () => {
+        setLoading(true);
+        try {
+            const response = await routeService.searchRoutes(startPoint, endPoint, sortBy);
+            const routes = response.data.map((route: Route) => ({
+                id: route._id,
+                routeNo: route.routeNo,
+                from: route.from,
+                to: route.to,
+                duration: route.duration,
+                nextBus: '8 min',
+                fare: `Rs. ${route.fare}`,
+                rating: route.rating,
+                stops: route.stops,
+                frequency: route.frequency
+            }));
+            setSearchResults(routes);
+        } catch (error) {
+            console.error('Error searching routes:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleBookSeats = (route: BusRoute) => {
@@ -106,10 +129,11 @@ const SearchRoutes = () => {
                         <div className="flex items-end">
                             <button
                                 onClick={handleSearch}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all"
+                                disabled={loading}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Search size={20} />
-                                Search
+                                {loading ? 'Searching...' : 'Search'}
                             </button>
                         </div>
                     </div>
