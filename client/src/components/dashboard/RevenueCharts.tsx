@@ -35,20 +35,20 @@ const RevenueCharts = () => {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#64748B', fontSize: 12 }} 
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748B', fontSize: 12 }}
                 dy={10}
               />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#64748B', fontSize: 12 }} 
-                tickFormatter={(value) => `$${value}`}
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748B', fontSize: 12 }}
+                tickFormatter={(value) => `LKR ${value}`}
               />
-              <Tooltip 
+              <Tooltip
                 cursor={{ fill: '#F1F5F9' }}
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               />
@@ -77,12 +77,12 @@ const RevenueCharts = () => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               />
-              <Legend 
-                verticalAlign="bottom" 
-                height={36} 
+              <Legend
+                verticalAlign="bottom"
+                height={36}
                 iconType="circle"
                 wrapperStyle={{ color: '#475569' }}
               />
