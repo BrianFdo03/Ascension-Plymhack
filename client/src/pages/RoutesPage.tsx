@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Plus,
     Search,
@@ -13,8 +13,9 @@ import { useJsApiLoader } from '@react-google-maps/api';
 import Layout from "../components/layout/Layout";
 import AddRouteModal from '../components/routes/AddRouteModal';
 import RouteDetailsModal from '../components/routes/RouteDetailsModal';
+import { getAllRoutes, createRoute, updateRoute, deleteRoute, type CreateRoutePayload, type RouteData } from '../services/routeService';
 
-// Define the shape of a Route object
+// Define the shape of a Route object matching backend but mapping _id to id for convenience
 interface BusRoute {
     id: string;
     routeNumber: string;
@@ -22,8 +23,7 @@ interface BusRoute {
     originCoords: { lat: number; lng: number };
     destination: string;
     destinationCoords: { lat: number; lng: number };
-    stop_count_display?: number; // legacy, can remove if unused
-    stopsList: { name: string; price: string; lat: number; lng: number }[]; // For details modal
+    stopsList: { name: string; price: string; lat: number; lng: number }[];
     status: 'Active' | 'Inactive';
 }
 
@@ -40,61 +40,51 @@ const RoutesPage: React.FC = () => {
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [selectedRoute, setSelectedRoute] = useState<BusRoute | null>(null);
     const [editingRoute, setEditingRoute] = useState<BusRoute | null>(null);
+    const [routes, setRoutes] = useState<BusRoute[]>([]);
+    const [loading, setLoading] = useState(true);
 
     // Filter States
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
     const [stopsFilter, setStopsFilter] = useState<'Any' | 'Short' | 'Medium' | 'Long'>('Any');
 
-    // Mock Data for Routes
-    const [routes, setRoutes] = useState<BusRoute[]>([
-        {
-            id: '1',
-            routeNumber: '17',
-            origin: 'Panadura',
-            originCoords: { lat: 6.7115, lng: 79.9074 },
-            destination: 'Kandy',
-            destinationCoords: { lat: 7.2906, lng: 80.6337 },
-            stopsList: [
-                { name: "Moratuwa", price: "50", lat: 6.7744, lng: 79.8816 },
-                { name: "Colombo Fort", price: "120", lat: 6.9319, lng: 79.8478 },
-                { name: "Paliyagoda", price: "150", lat: 6.9649, lng: 79.8863 },
-                { name: "Kellaniya", price: "160", lat: 6.9555, lng: 79.9175 },
-                { name: "Kadawatha", price: "200", lat: 7.0016, lng: 79.9515 }
-            ],
-            status: 'Active'
-        },
-        {
-            id: '2',
-            routeNumber: '138',
-            origin: 'Pettah',
-            originCoords: { lat: 6.9366, lng: 79.8449 },
-            destination: 'Homagama',
-            destinationCoords: { lat: 6.8412, lng: 80.0034 },
-            stopsList: [],
-            status: 'Active'
-        },
-        {
-            id: '3',
-            routeNumber: '01',
-            origin: 'Colombo',
-            originCoords: { lat: 6.9271, lng: 79.8612 },
-            destination: 'Kandy',
-            destinationCoords: { lat: 7.2906, lng: 80.6337 },
-            stopsList: [],
-            status: 'Active'
-        },
-        // ... add more mocked coords/stops if needed for other routes to look good
-    ]);
+    // Fetch Routes
+    const fetchRoutes = async () => {
+        try {
+            setLoading(true);
+            const data = await getAllRoutes();
+            // Map _id to id for frontend consistency
+            const mappedRoutes: BusRoute[] = data.map((route: RouteData) => ({
+                id: route._id,
+                routeNumber: route.routeNumber,
+                origin: route.origin,
+                originCoords: route.originCoords,
+                destination: route.destination,
+                destinationCoords: route.destinationCoords,
+                stopsList: route.stopsList,
+                status: route.status
+            }));
+            setRoutes(mappedRoutes);
+        } catch (error) {
+            console.error("Failed to fetch routes:", error);
+            // toast.error("Failed to load routes");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchRoutes();
+    }, []);
 
     // Derived Filtered Routes
     const filteredRoutes = routes.filter(route => {
         // Search Filter
         const query = searchQuery.toLowerCase();
         const matchesSearch =
-            route.routeNumber.toLowerCase().includes(query) ||
-            route.origin.toLowerCase().includes(query) ||
-            route.destination.toLowerCase().includes(query);
+            (route.routeNumber?.toLowerCase() || "").includes(query) ||
+            (route.origin?.toLowerCase() || "").includes(query) ||
+            (route.destination?.toLowerCase() || "").includes(query);
 
         // Status Filter
         const matchesStatus = statusFilter === 'All' || route.status === statusFilter;
@@ -110,17 +100,21 @@ const RoutesPage: React.FC = () => {
     });
 
     // Handler for Deleting a route
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('Are you sure you want to delete this route?')) {
-            setRoutes(routes.filter(route => route.id !== id));
+            try {
+                await deleteRoute(id);
+                // toast.success("Route deleted successfully");
+                fetchRoutes(); // Refresh list
+            } catch (error) {
+                console.error("Failed to delete route:", error);
+                // toast.error("Failed to delete route");
+                alert("Failed to delete route");
+            }
         }
     };
 
     const handleViewDetails = (route: BusRoute) => {
-        // Transform BusRoute to match RouteDetailsModal's expected RouteData format
-        // Note: RouteDetailsModal expects stops to have optional lat/lng, but our mock has required.
-        // Typescript might complain if we don't map explicitly or if types don't align perfectly.
-        // Let's rely on structural typing or simple casting if needed, but manual variable is safer.
         setSelectedRoute(route);
         setViewModalOpen(true);
     };
@@ -133,6 +127,42 @@ const RoutesPage: React.FC = () => {
     const handleAddNewRoute = () => {
         setEditingRoute(null);
         setIsModalOpen(true);
+    };
+
+    const handleSaveRoute = async (data: any) => {
+        try {
+            const payload: CreateRoutePayload = {
+                routeNumber: data.routeNumber,
+                origin: data.origin,
+                originCoords: data.originCoords!,
+                destination: data.destination,
+                destinationCoords: data.destinationCoords!,
+                stopsList: data.stops.map((s: any) => ({
+                    name: s.name,
+                    price: s.price,
+                    lat: s.lat!,
+                    lng: s.lng!
+                })),
+                status: data.status as 'Active' | 'Inactive'
+            };
+
+            if (editingRoute) {
+                // Update existing route
+                await updateRoute(editingRoute.id, payload);
+                // toast.success("Route updated successfully");
+            } else {
+                // Add new route
+                await createRoute(payload);
+                // toast.success("Route created successfully");
+            }
+            setIsModalOpen(false);
+            setEditingRoute(null);
+            fetchRoutes(); // Refresh list
+        } catch (error) {
+            console.error("Failed to save route:", error);
+            // toast.error("Failed to save route");
+            alert("Failed to save route");
+        }
     };
 
     const toggleStatusFilter = () => {
@@ -209,86 +239,98 @@ const RoutesPage: React.FC = () => {
 
                         {/* 3. The Table */}
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500">
-                                        <th className="px-6 py-4 font-semibold">Destination (A → B)</th>
-                                        <th className="px-6 py-4 font-semibold">Route No</th>
-                                        <th className="px-6 py-4 font-semibold">Status</th>
-                                        <th className="px-6 py-4 font-semibold text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {filteredRoutes.map((route) => (
-                                        <tr key={route.id} className="group hover:bg-blue-50/30 transition-colors">
+                            {loading ? (
+                                <div className="flex items-center justify-center p-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                </div>
+                            ) : routes.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center p-12 text-slate-400">
+                                    <MapPin size={48} className="mb-4 opacity-20" />
+                                    <p className="text-lg font-medium text-slate-500">No routes found</p>
+                                    <p className="text-sm">Create a new route to get started.</p>
+                                </div>
+                            ) : (
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500">
+                                            <th className="px-6 py-4 font-semibold">Destination (A → B)</th>
+                                            <th className="px-6 py-4 font-semibold">Route No</th>
+                                            <th className="px-6 py-4 font-semibold">Status</th>
+                                            <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {filteredRoutes.map((route) => (
+                                            <tr key={route.id} className="group hover:bg-blue-50/30 transition-colors">
 
-                                            {/* Destination Column */}
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-lg bg-blue-100/50 flex items-center justify-center text-blue-600">
-                                                        <MapPin size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2 font-semibold text-slate-900">
-                                                            {route.origin}
-                                                            <ArrowRight size={14} className="text-slate-400" />
-                                                            {route.destination}
+                                                {/* Destination Column */}
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-10 w-10 rounded-lg bg-blue-100/50 flex items-center justify-center text-blue-600">
+                                                            <MapPin size={20} />
                                                         </div>
-                                                        <div className="text-xs text-slate-500">{route.stopsList.length} stops</div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2 font-semibold text-slate-900">
+                                                                {(route.origin?.replace(/,?\s*Sri Lanka$/i, '').trim() || "")}
+                                                                <ArrowRight size={14} className="text-slate-400" />
+                                                                {(route.destination?.replace(/,?\s*Sri Lanka$/i, '').trim() || "")}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500">{route.stopsList.length} stops</div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
+                                                </td>
 
-                                            {/* Route Number Column */}
-                                            <td className="px-6 py-4">
-                                                <span className="font-mono font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded text-sm">
-                                                    #{route.routeNumber}
-                                                </span>
-                                            </td>
+                                                {/* Route Number Column */}
+                                                <td className="px-6 py-4">
+                                                    <span className="font-mono font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded text-sm">
+                                                        {route.routeNumber}
+                                                    </span>
+                                                </td>
 
-                                            {/* Status Column */}
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
+                                                {/* Status Column */}
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
                                                     ${route.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}
                                                 `}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full
+                                                        <span className={`w-1.5 h-1.5 rounded-full
                                                         ${route.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-500'}
                                                     `}></span>
-                                                    {route.status}
-                                                </span>
-                                            </td>
+                                                        {route.status}
+                                                    </span>
+                                                </td>
 
-                                            {/* Actions Column */}
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button
-                                                        onClick={() => handleViewDetails(route)}
-                                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                                                        title="View Details"
-                                                    >
-                                                        <Eye size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleEditRoute(route)}
-                                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                                        title="Edit Route"
-                                                    >
-                                                        <Pencil size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(route.id)}
-                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                        title="Delete Route"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </div>
-                                            </td>
+                                                {/* Actions Column */}
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleViewDetails(route)}
+                                                            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                            title="View Details"
+                                                        >
+                                                            <Eye size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleEditRoute(route)}
+                                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                            title="Edit Route"
+                                                        >
+                                                            <Pencil size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(route.id)}
+                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                            title="Delete Route"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </td>
 
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
                         </div>
 
                     </div>
@@ -297,46 +339,7 @@ const RoutesPage: React.FC = () => {
             <AddRouteModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={(data) => {
-                    if (editingRoute) {
-                        // Update existing route
-                        setRoutes(routes.map(r => r.id === editingRoute.id ? {
-                            ...r,
-                            routeNumber: data.routeNumber,
-                            origin: data.origin,
-                            originCoords: data.originCoords!,
-                            destination: data.destination,
-                            destinationCoords: data.destinationCoords!,
-                            status: data.status as 'Active' | 'Inactive',
-                            stopsList: data.stops.map(s => ({
-                                name: s.name,
-                                price: s.price,
-                                lat: s.lat!,
-                                lng: s.lng!
-                            }))
-                        } : r));
-                    } else {
-                        // Add new route
-                        const newRoute: BusRoute = {
-                            id: (routes.length + 1).toString(),
-                            routeNumber: data.routeNumber,
-                            origin: data.origin,
-                            originCoords: data.originCoords!,
-                            destination: data.destination,
-                            destinationCoords: data.destinationCoords!,
-                            status: data.status as 'Active' | 'Inactive',
-                            stopsList: data.stops.map(s => ({
-                                name: s.name,
-                                price: s.price,
-                                lat: s.lat!,
-                                lng: s.lng!
-                            }))
-                        };
-                        setRoutes([...routes, newRoute]);
-                    }
-                    setIsModalOpen(false);
-                    setEditingRoute(null);
-                }}
+                onSave={handleSaveRoute}
                 isLoaded={isLoaded}
                 routeToEdit={editingRoute ? {
                     routeNumber: editingRoute.routeNumber,

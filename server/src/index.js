@@ -36,6 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/drivers", driverRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/routes", require("./routes/routeRoutes"));
 
 // Test route
 app.get("/", (req, res) => {

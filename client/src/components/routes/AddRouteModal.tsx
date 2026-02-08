@@ -44,12 +44,15 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave, 
         if (isOpen) {
             if (routeToEdit) {
                 setRouteNumber(routeToEdit.routeNumber);
-                setStartPoint(routeToEdit.origin);
+                setStartPoint(routeToEdit.origin.replace(/,?\s*Sri Lanka$/i, '').trim());
                 setStartCoords(routeToEdit.originCoords);
-                setEndPoint(routeToEdit.destination);
+                setEndPoint(routeToEdit.destination.replace(/,?\s*Sri Lanka$/i, '').trim());
                 setEndCoords(routeToEdit.destinationCoords);
                 setStatus(routeToEdit.status);
-                setStops(routeToEdit.stops || []);
+                setStops((routeToEdit.stops || []).map(s => ({
+                    ...s,
+                    name: s.name.replace(/,?\s*Sri Lanka$/i, '').trim()
+                })));
             } else {
                 // Reset form for new route
                 setRouteNumber("");
@@ -104,7 +107,7 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave, 
 
     const updateStopLocation = (index: number, data: LocationData) => {
         const newStops = [...stops];
-        newStops[index].name = data.address;
+        newStops[index].name = data.address.replace(/,?\s*Sri Lanka$/i, '').trim();
         newStops[index].lat = data.lat;
         newStops[index].lng = data.lng;
         setStops(newStops);
@@ -149,7 +152,8 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave, 
                                 value={startPoint}
                                 onChange={setStartPoint}
                                 onLocationSelect={(data) => {
-                                    setStartPoint(data.address);
+                                    const cleanedAddress = data.address.replace(/,?\s*Sri Lanka$/i, '').trim();
+                                    setStartPoint(cleanedAddress);
                                     setStartCoords({ lat: data.lat, lng: data.lng });
                                 }}
                                 isLoaded={isLoaded}
@@ -160,7 +164,8 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave, 
                                 value={endPoint}
                                 onChange={setEndPoint}
                                 onLocationSelect={(data) => {
-                                    setEndPoint(data.address);
+                                    const cleanedAddress = data.address.replace(/,?\s*Sri Lanka$/i, '').trim();
+                                    setEndPoint(cleanedAddress);
                                     setEndCoords({ lat: data.lat, lng: data.lng });
                                 }}
                                 isLoaded={isLoaded}

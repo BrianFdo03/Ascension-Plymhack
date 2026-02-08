@@ -65,7 +65,7 @@ const RouteDetailsModal: React.FC<RouteDetailsModalProps> = ({ isOpen, onClose, 
                     <div>
                         <div className="flex items-center gap-3 mb-1">
                             <span className="font-mono font-bold text-lg text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">
-                                #{route.routeNumber}
+                                {route.routeNumber}
                             </span>
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
                                 ${route.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}
@@ -77,7 +77,7 @@ const RouteDetailsModal: React.FC<RouteDetailsModalProps> = ({ isOpen, onClose, 
                             </span>
                         </div>
                         <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                            {route.origin} <ArrowRight size={20} className="text-slate-400" /> {route.destination}
+                            {route.origin.replace(/,?\s*Sri Lanka$/i, '').trim()} <ArrowRight size={20} className="text-slate-400" /> {route.destination.replace(/,?\s*Sri Lanka$/i, '').trim()}
                         </h2>
                     </div>
                     <button
@@ -114,7 +114,7 @@ const RouteDetailsModal: React.FC<RouteDetailsModalProps> = ({ isOpen, onClose, 
                                     {/* Start Point */}
                                     <div className="relative">
                                         <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full border-2 border-blue-500 bg-white"></div>
-                                        <div className="text-sm font-medium text-slate-900">{route.origin}</div>
+                                        <div className="text-sm font-medium text-slate-900">{route.origin.replace(/,?\s*Sri Lanka$/i, '').trim()}</div>
                                         <div className="text-xs text-slate-500">Start Point</div>
                                     </div>
 
@@ -122,7 +122,7 @@ const RouteDetailsModal: React.FC<RouteDetailsModalProps> = ({ isOpen, onClose, 
                                     {route.stops.map((stop, index) => (
                                         <div key={index} className="relative">
                                             <div className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-slate-300"></div>
-                                            <div className="text-sm text-slate-700">{stop.name}</div>
+                                            <div className="text-sm text-slate-700">{stop.name.replace(/,?\s*Sri Lanka$/i, '').trim()}</div>
                                             <div className="text-xs text-slate-400">Rs. {stop.price}</div>
                                         </div>
                                     ))}
@@ -130,7 +130,7 @@ const RouteDetailsModal: React.FC<RouteDetailsModalProps> = ({ isOpen, onClose, 
                                     {/* End Point */}
                                     <div className="relative">
                                         <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full border-2 border-slate-900 bg-white"></div>
-                                        <div className="text-sm font-medium text-slate-900">{route.destination}</div>
+                                        <div className="text-sm font-medium text-slate-900">{route.destination.replace(/,?\s*Sri Lanka$/i, '').trim()}</div>
                                         <div className="text-xs text-slate-500">End Point</div>
                                     </div>
                                 </div>
