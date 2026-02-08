@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Route = require('../models/Route');
 const LiveBus = require('../models/LiveBus');
+const Bus = require('../models/Bus');
+const TrafficAlert = require('../models/TrafficAlert');
 require('dotenv').config();
 
 const connectDB = require('../config/db');
@@ -79,7 +81,7 @@ const createLiveBuses = (routeIds) => [
     {
         routeId: routeIds[0], // Route 138
         routeNo: '138',
-        busNumber: 'NB-1234',
+        busNumber: 'WP NB-1234',
         currentLocation: {
             name: 'Nugegoda',
             coordinates: { lat: 6.8649, lng: 79.8997 }
@@ -138,6 +140,60 @@ const createLiveBuses = (routeIds) => [
     }
 ];
 
+// Sample buses data
+const createBuses = (routeIds) => [
+    {
+        numberPlate: 'WP NB-1234',
+        routeId: routeIds[0],
+        routeNo: '138',
+        driverName: 'Sunil Perera',
+        totalSeats: 52,
+        bookedSeats: 28,
+        departureTime: '09:00 AM',
+        status: 'active',
+        isActive: true
+    },
+    {
+        numberPlate: 'NC-5678',
+        routeId: routeIds[1],
+        routeNo: '01',
+        driverName: 'Kamal Silva',
+        totalSeats: 52,
+        bookedSeats: 35,
+        departureTime: '08:30 AM',
+        status: 'active',
+        isActive: true
+    }
+];
+
+// Sample traffic alerts
+const createTrafficAlerts = (routeIds) => [
+    {
+        location: 'Borella Junction',
+        coordinates: { lat: 6.9147, lng: 79.8803 },
+        severity: 'high',
+        description: 'Heavy traffic congestion due to road work',
+        routeIds: [routeIds[0], routeIds[3]],
+        isActive: true
+    },
+    {
+        location: 'Kollupitiya',
+        coordinates: { lat: 6.9147, lng: 79.8503 },
+        severity: 'medium',
+        description: 'Moderate traffic - school zone',
+        routeIds: [routeIds[1]],
+        isActive: true
+    },
+    {
+        location: 'Kotte',
+        coordinates: { lat: 6.8905, lng: 79.9018 },
+        severity: 'high',
+        description: 'Accident reported, expect delays',
+        routeIds: [routeIds[0]],
+        isActive: true
+    }
+];
+
 const seedDatabase = async () => {
     try {
         // Connect to database
@@ -148,6 +204,8 @@ const seedDatabase = async () => {
         // Clear existing data
         await Route.deleteMany({});
         await LiveBus.deleteMany({});
+        await Bus.deleteMany({});
+        await TrafficAlert.deleteMany({});
         console.log('✅ Cleared existing data');
         
         // Insert routes
@@ -157,15 +215,27 @@ const seedDatabase = async () => {
         // Get route IDs for live buses
         const routeIds = insertedRoutes.map(route => route._id);
         
+        // Insert buses
+        const buses = createBuses(routeIds);
+        const insertedBuses = await Bus.insertMany(buses);
+        console.log(`✅ Inserted ${insertedBuses.length} buses`);
+        
         // Insert live buses
         const liveBuses = createLiveBuses(routeIds);
-        const insertedBuses = await LiveBus.insertMany(liveBuses);
-        console.log(`✅ Inserted ${insertedBuses.length} live buses`);
+        const insertedLiveBuses = await LiveBus.insertMany(liveBuses);
+        console.log(`✅ Inserted ${insertedLiveBuses.length} live buses`);
+        
+        // Insert traffic alerts
+        const trafficAlerts = createTrafficAlerts(routeIds);
+        const insertedAlerts = await TrafficAlert.insertMany(trafficAlerts);
+        console.log(`✅ Inserted ${insertedAlerts.length} traffic alerts`);
         
         console.log('🎉 Database seeding completed successfully!');
         console.log('\nSample Data:');
         console.log('- Routes:', insertedRoutes.length);
-        console.log('- Live Buses:', insertedBuses.length);
+        console.log('- Buses:', insertedBuses.length);
+        console.log('- Live Buses:', insertedLiveBuses.length);
+        console.log('- Traffic Alerts:', insertedAlerts.length);
         
         process.exit(0);
     } catch (error) {

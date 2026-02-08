@@ -37,7 +37,9 @@ app.use((req, res, next) => {
 
 // API Routes
 const passengerRoutes = require('./routes/passenger');
+const driverRoutes = require('./routes/driver');
 app.use('/api/passenger', passengerRoutes);
+app.use('/api/driver', driverRoutes);
 
 // Error handling middleware
 const { errorHandler, notFound } = require('./middlewares/errorHandler');
