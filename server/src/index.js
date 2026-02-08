@@ -8,6 +8,8 @@ const authRoutes = require("./routes/authRoutes");
 const connectDB = require("./config/db");
 const driverRoutes = require("./routes/driverRoutes");
 const passengerRoutes = require("./routes/passenger");
+const notificationRoutes = require("./routes/notifications");
+const routeRoutes = require("./routes/routeRoutes");
 
 dotenv.config();
 
@@ -52,22 +54,26 @@ app.use((req, res, next) => {
   next();
 });
 
-// API Routes
-
 app.use("/api/passenger", passengerRoutes);
 app.use("/api/driver", driverRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/routes", routeRoutes);
+app.use("/api/drivers", driverRoutes);
 
 // Error handling middleware
 const { errorHandler, notFound } = require("./middlewares/errorHandler");
 
 // Test route
 app.get("/", (req, res) => {
-  res.json({ message: "Backend is running! " + PORT });
+  res.json({ message: "Backend is running on port " + PORT });
 });
 
 app.use(notFound);
 app.use(errorHandler);
+
+// Make io accessible to routes
+app.set("io", io);
 
 // WebSocket connection handling
 const connectedUsers = new Map(); // Track connected users
@@ -78,7 +84,10 @@ io.on("connection", (socket) => {
   // Join room based on user type
   socket.on("join", (data) => {
     const { userId, userType, userName } = data;
-    socket.join(userType); // 'admin' or 'driver'
+    socket.join(userType); // 'admin', 'driver', or 'passenger'
+    if (userId) {
+      socket.join(userId); // Join personal room for targeted notifications
+    }
 
     // Store user info
     connectedUsers.set(socket.id, {

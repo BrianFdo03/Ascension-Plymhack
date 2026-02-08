@@ -10,34 +10,34 @@ interface DashboardStatsProps {
 const DashboardStats = ({ refreshKey }: DashboardStatsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Active Buses"
-          value="420"
-          percentage="20.1%"
-          icon={Bus}
-          trend="up"
-        />
-        <StatCard
-          title="Total Buses"
-          value="825"
-          percentage="15.2%"
-          icon={Bus}
-          trend="up"
-        />
-        <StatCard
-          title="Total Routes"
-          value="825"
-          percentage="12.5%"
-          icon={Route}
-          trend="up"
-        />
-        <StatCard
-          title="Total Revenue"
-          value="$48,000"
-          percentage="4.5%"
-          icon={BadgeDollarSign}
-          trend="up"
-        />
+      <StatCard
+        title="Active Buses"
+        value="420"
+        percentage="20.1%"
+        icon={Bus}
+        trend="up"
+      />
+      <StatCard
+        title="Total Buses"
+        value="825"
+        percentage="15.2%"
+        icon={Bus}
+        trend="up"
+      />
+      <StatCard
+        title="Total Routes"
+        value="825"
+        percentage="12.5%"
+        icon={Route}
+        trend="up"
+      />
+      <StatCard
+        title="Total Revenue"
+        value="LKR 48,000"
+        percentage="4.5%"
+        icon={BadgeDollarSign}
+        trend="up"
+      />
     </div>
   );
 };

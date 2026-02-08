@@ -1,26 +1,55 @@
 const mongoose = require('mongoose');
 
 const routeSchema = new mongoose.Schema({
-    routeNo: {
+    routeNumber: {
         type: String,
         required: true,
-        unique: true
+        trim: true
+    },
+    origin: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    originCoords: {
+        lat: { type: Number, required: true },
+        lng: { type: Number, required: true }
+    },
+    destination: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    destinationCoords: {
+        lat: { type: Number, required: true },
+        lng: { type: Number, required: true }
+    },
+    stopsList: [{
+        name: { type: String, required: true },
+        price: { type: String, required: true },
+        lat: { type: Number, required: true },
+        lng: { type: Number, required: true }
+    }],
+    status: {
+        type: String,
+        enum: ['Active', 'Inactive'],
+        default: 'Active'
+    },
+    // Legacy fields for backward compatibility
+    routeNo: {
+        type: String
     },
     from: {
-        type: String,
-        required: true
+        type: String
     },
     to: {
-        type: String,
-        required: true
+        type: String
     },
     duration: {
-        type: String,
-        required: true
+        type: String
     },
     fare: {
-        type: Number,
-        required: true
+        type: Number
     },
     rating: {
         type: Number,

@@ -1,5 +1,6 @@
 const TrafficAlert = require('../../models/TrafficAlert');
 const Bus = require('../../models/Bus');
+const Notification = require('../../models/Notification');
 
 // Get traffic alerts for driver's route
 exports.getRouteTrafficAlerts = async (req, res) => {
@@ -58,6 +59,31 @@ exports.reportTrafficAlert = async (req, res) => {
             reportedBy: driverId,
             isActive: true
         });
+        
+        // Send notification to all drivers and passengers on affected routes
+        const notificationTitle = severity === 'high' ? '⚠️ High Traffic Alert' : 
+                                 severity === 'medium' ? 'Traffic Alert' : 'Traffic Update';
+        
+        const notification = await Notification.create({
+            recipientType: 'all',
+            title: notificationTitle,
+            message: `Traffic reported at ${location}. ${description || 'Please plan accordingly.'}`,
+            type: severity === 'high' ? 'warning' : 'info',
+            priority: severity === 'high' ? 'high' : 'medium',
+            data: {
+                alertId: alert._id,
+                location,
+                coordinates,
+                severity,
+                routeIds: alert.routeIds
+            }
+        });
+
+        // Emit real-time notification
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('new_notification', notification);
+        }
         
         res.status(201).json({
             success: true,

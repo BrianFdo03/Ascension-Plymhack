@@ -14,35 +14,35 @@ const highRevenueRoutes: Route[] = [
     routeNo: 128,
     routeName: "Kottawa - Homagama",
     noBuses: 10,
-    revenue: "$500.00",
+    revenue: "LKR 500.00",
   },
   {
     id: "R-7342",
     routeNo: 267,
     routeName: "Kottawa - Maharagama",
     noBuses: 20,
-    revenue: "$500.00",
+    revenue: "LKR 500.00",
   },
   {
     id: "R-7350",
     routeNo: 299,
     routeName: "Gampaha - Kandy",
     noBuses: 10,
-    revenue: "$500.00",
+    revenue: "LKR 500.00",
   },
   {
     id: "#R-7349",
     routeNo: 101,
     routeName: "Panadura - Mt. Lavinia",
     noBuses: 10,
-    revenue: "$500.00",
+    revenue: "LKR 500.00",
   },
   {
     id: "R-7348",
     routeNo: 100,
     routeName: "Moratuwa - Kaluthara",
     noBuses: 10,
-    revenue: "$500.00",
+    revenue: "LKR 500.00",
   },
 ];
 
@@ -55,7 +55,7 @@ const HighRevenueRoutes = ({ refreshKey }: { refreshKey?: number }) => {
         <h2 className="text-xl font-bold text-blue-900">Routes</h2>
         <button className="text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors">View All</button>
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead className="bg-blue-50/50 text-blue-900 text-sm font-semibold uppercase tracking-wider border-b border-blue-100">
