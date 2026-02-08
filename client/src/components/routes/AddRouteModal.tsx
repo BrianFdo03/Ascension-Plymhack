@@ -19,7 +19,6 @@ interface RouteData {
     destinationCoords: { lat: number; lng: number } | null;
     status: string;
     stops: StopData[];
-    description: string;
 }
 
 interface AddRouteModalProps {
@@ -46,7 +45,6 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
     const [routeNumber, setRouteNumber] = useState("");
     const [status, setStatus] = useState("Active");
     const [stops, setStops] = useState<StopData[]>([]);
-    const [description, setDescription] = useState("");
 
     if (!isOpen) return null;
 
@@ -60,7 +58,6 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
             destinationCoords: endCoords,
             status,
             stops: stops.filter(s => s.name.trim() !== ""), // Filter out empty stops
-            description
         });
         // Reset form or handle closing in parent
         onClose();
@@ -245,17 +242,7 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
                             />
                         </div>
 
-                        {/* Description */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Description</label>
-                            <textarea
-                                rows={4}
-                                placeholder="Add any details about this route, major stops, or schedule notes..."
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm placeholder:text-slate-400 resize-none"
-                            ></textarea>
-                        </div>
+
                     </form>
                 </div>
 
