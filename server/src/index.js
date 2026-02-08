@@ -2,6 +2,8 @@ const express = require("express");
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
+const dotenv = require("dotenv");
+const cors = require("cors");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
 const connectDB = require("./config/db");
@@ -15,40 +17,41 @@ const io = new Server(server, {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Connect to Database
 connectDB();
 
 // Middleware
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// CORS middleware
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.CLIENT_URL || 'http://localhost:5173');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
 
 // API Routes
 const passengerRoutes = require('./routes/passenger');
 const driverRoutes = require('./routes/driver');
 const notificationRoutes = require('./routes/notifications');
+const authRoutes = require("./routes/authRoutes");
+const routeRoutes = require("./routes/routeRoutes");
+
 app.use('/api/passenger', passengerRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/routes", routeRoutes);
+app.use("/api/drivers", driverRoutes);
 
 // Error handling middleware
 const { errorHandler, notFound } = require('./middlewares/errorHandler');
 
 // Test route
 app.get("/", (req, res) => {
-  res.json({ message: "Backend is running! " + PORT });
+  res.json({ message: "Backend is running on port " + PORT });
 });
 
 app.use(notFound);
@@ -150,11 +153,3 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-// Test route
-app.get("/", (req, res) => {
-  res.json({ message: "Backend is running! " + PORT });
-});
-
-
-

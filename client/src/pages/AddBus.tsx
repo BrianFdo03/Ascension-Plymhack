@@ -59,7 +59,7 @@ const MOCK_BUSES: BusData[] = [
 
 const AddBus = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('All Status');
+    const [statusFilter] = useState<string>('All Status');
     const [showAddModal, setShowAddModal] = useState(false);
     const [formData, setFormData] = useState({
         numberPlate: '',
@@ -311,7 +311,7 @@ const AddBus = () => {
                             <h2 className="text-2xl font-bold text-gray-900 mb-1">Vehicles</h2>
                             <p className="text-sm text-gray-500">Manage your fleet destinations and schedules.</p>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setShowAddModal(true)}
                             className="bg-[#2563EB] hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all"
                         >

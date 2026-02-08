@@ -1,21 +1,116 @@
-import React from 'react';
-import { X, Upload, MapPin, Map } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Plus, Trash2 } from 'lucide-react';
+import LocationPicker, { type LocationData } from '../common/LocationPicker';
+import RouteMapPreview from './RoutePreview';
+
+interface StopData {
+    name: string;
+    price: string;
+    lat?: number;
+    lng?: number;
+}
+
+interface RouteData {
+    routeNumber: string;
+    origin: string;
+    originCoords: { lat: number; lng: number } | null;
+    destination: string;
+    destinationCoords: { lat: number; lng: number } | null;
+    status: string;
+    stops: StopData[];
+}
 
 interface AddRouteModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (routeData: any) => void;
+    onSave: (routeData: RouteData) => void;
+    isLoaded: boolean;
+    routeToEdit?: RouteData | null;
 }
 
-const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave, isLoaded, routeToEdit }) => {
+
+    const [startPoint, setStartPoint] = useState("");
+    const [startCoords, setStartCoords] = useState<{ lat: number, lng: number } | null>(null);
+
+    const [endPoint, setEndPoint] = useState("");
+    const [endCoords, setEndCoords] = useState<{ lat: number, lng: number } | null>(null);
+
+    const [routeNumber, setRouteNumber] = useState("");
+    const [status, setStatus] = useState("Active");
+    const [stops, setStops] = useState<StopData[]>([]);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            if (routeToEdit) {
+                setRouteNumber(routeToEdit.routeNumber);
+                setStartPoint(routeToEdit.origin.replace(/,?\s*Sri Lanka$/i, '').trim());
+                setStartCoords(routeToEdit.originCoords);
+                setEndPoint(routeToEdit.destination.replace(/,?\s*Sri Lanka$/i, '').trim());
+                setEndCoords(routeToEdit.destinationCoords);
+                setStatus(routeToEdit.status);
+                setStops((routeToEdit.stops || []).map(s => ({
+                    ...s,
+                    name: s.name.replace(/,?\s*Sri Lanka$/i, '').trim()
+                })));
+            } else {
+                // Reset form for new route
+                setRouteNumber("");
+                setStartPoint("");
+                setStartCoords(null);
+                setEndPoint("");
+                setEndCoords(null);
+                setStatus("Active");
+                setStops([]);
+            }
+        }
+    }, [isOpen, routeToEdit]);
+
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Gather data and call onSave
-        // For now just close
-        onSave({});
+        onSave({
+            routeNumber,
+            origin: startPoint,
+            originCoords: startCoords,
+            destination: endPoint,
+            destinationCoords: endCoords,
+            status,
+            stops: stops.filter(s => s.name.trim() !== ""), // Filter out empty stops
+        });
+        // Reset form or handle closing in parent
         onClose();
+    };
+
+    const addStop = () => {
+        setStops([...stops, { name: "", price: "" }]);
+    };
+
+    const removeStop = (index: number) => {
+        const newStops = [...stops];
+        newStops.splice(index, 1);
+        setStops(newStops);
+    };
+
+    const updateStopName = (index: number, value: string) => {
+        const newStops = [...stops];
+        newStops[index].name = value;
+        setStops(newStops);
+    };
+
+    const updateStopPrice = (index: number, value: string) => {
+        const newStops = [...stops];
+        newStops[index].price = value;
+        setStops(newStops);
+    };
+
+    const updateStopLocation = (index: number, data: LocationData) => {
+        const newStops = [...stops];
+        newStops[index].name = data.address.replace(/,?\s*Sri Lanka$/i, '').trim();
+        newStops[index].lat = data.lat;
+        newStops[index].lng = data.lng;
+        setStops(newStops);
     };
 
     return (
@@ -32,8 +127,10 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
                 {/* Header */}
                 <div className="flex items-start justify-between p-6 border-b border-slate-100">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900">Add New Route</h2>
-                        <p className="text-slate-500 text-sm mt-1">Add a new route to your fleet. Click save when you're done.</p>
+                        <h2 className="text-xl font-bold text-slate-900">{routeToEdit ? "Edit Route" : "Add New Route"}</h2>
+                        <p className="text-slate-500 text-sm mt-1">
+                            {routeToEdit ? "Update the details of the route." : "Add a new route to your fleet. Click save when you're done."}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -49,42 +146,30 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
 
                         {/* Row 1: Start & End Points */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Start Point</label>
-                                <div className="relative group">
-                                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search location..."
-                                        className="w-full pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm placeholder:text-slate-400"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
-                                        title="Pick from Map"
-                                    >
-                                        <Map size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">End Point</label>
-                                <div className="relative group">
-                                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search location..."
-                                        className="w-full pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm placeholder:text-slate-400"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
-                                        title="Pick from Map"
-                                    >
-                                        <Map size={16} />
-                                    </button>
-                                </div>
-                            </div>
+                            <LocationPicker
+                                label="Start Point"
+                                placeholder="Search start location"
+                                value={startPoint}
+                                onChange={setStartPoint}
+                                onLocationSelect={(data) => {
+                                    const cleanedAddress = data.address.replace(/,?\s*Sri Lanka$/i, '').trim();
+                                    setStartPoint(cleanedAddress);
+                                    setStartCoords({ lat: data.lat, lng: data.lng });
+                                }}
+                                isLoaded={isLoaded}
+                            />
+                            <LocationPicker
+                                label="End Point"
+                                placeholder="Search end location"
+                                value={endPoint}
+                                onChange={setEndPoint}
+                                onLocationSelect={(data) => {
+                                    const cleanedAddress = data.address.replace(/,?\s*Sri Lanka$/i, '').trim();
+                                    setEndPoint(cleanedAddress);
+                                    setEndCoords({ lat: data.lat, lng: data.lng });
+                                }}
+                                isLoaded={isLoaded}
+                            />
                         </div>
 
                         {/* Row 2: Route No & Status */}
@@ -94,54 +179,94 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
                                 <input
                                     type="text"
                                     placeholder="e.g., 177"
+                                    value={routeNumber}
+                                    onChange={(e) => setRouteNumber(e.target.value)}
                                     className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm placeholder:text-slate-400"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-700">Status</label>
-                                <select className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm text-slate-700">
+                                <select
+                                    value={status}
+                                    onChange={(e) => setStatus(e.target.value)}
+                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm text-slate-700"
+                                >
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
                                 </select>
                             </div>
                         </div>
 
-                        {/* Row 3: Stops (replacing Stock) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Total Stops</label>
-                                <input
-                                    type="number"
-                                    placeholder="0"
-                                    min="0"
-                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm placeholder:text-slate-400"
-                                />
+                        {/* Row 3: Sub Bus Stops */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-slate-700">Sub Bus Stops & Prices</label>
+                                <button
+                                    type="button"
+                                    onClick={addStop}
+                                    className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                                >
+                                    <Plus size={16} />
+                                    Add Stop
+                                </button>
+                            </div>
+
+                            {stops.length === 0 && (
+                                <div className="text-center p-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 text-slate-400 text-sm">
+                                    No sub stops added. Click "Add Stop" to add one.
+                                </div>
+                            )}
+
+                            <div className="space-y-3">
+                                {stops.map((stop, index) => (
+                                    <div key={index} className="flex items-end gap-3 group animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="flex-[2]">
+                                            <LocationPicker
+                                                label={`Stop ${index + 1}`}
+                                                placeholder={`Search stop ${index + 1}...`}
+                                                value={stop.name}
+                                                onChange={(value) => updateStopName(index, value)}
+                                                onLocationSelect={(data) => updateStopLocation(index, data)}
+                                                isLoaded={isLoaded}
+                                            />
+                                        </div>
+                                        <div className="flex-1 space-y-2">
+                                            <label className="text-sm font-medium text-slate-700 block">Price (Rs)</label>
+                                            <input
+                                                type="number"
+                                                placeholder="0.00"
+                                                min="0"
+                                                step="0.01"
+                                                value={stop.price}
+                                                onChange={(e) => updateStopPrice(index, e.target.value)}
+                                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm placeholder:text-slate-400"
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeStop(index)}
+                                            className="mb-1 p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all h-[42px] flex items-center justify-center border border-transparent hover:border-red-100"
+                                            title="Remove Stop"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
-                        {/* File Upload (Keeping structure as requested) */}
+                        {/* Route Map Visualization */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Route Map / Image</label>
-                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer group">
-                                <div className="p-3 bg-slate-50 rounded-full group-hover:bg-white transition-colors">
-                                    <Upload size={20} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-sm font-medium text-slate-700">Click to upload</p>
-                                    <p className="text-xs text-slate-400">SVG, PNG, JPG or GIF (max. 800x400px)</p>
-                                </div>
-                            </div>
+                            <label className="text-sm font-medium text-slate-700">Route Preview</label>
+                            <RouteMapPreview
+                                startPoint={startCoords}
+                                endPoint={endCoords}
+                                stops={stops.filter(s => s.lat && s.lng).map(s => ({ lat: s.lat!, lng: s.lng! }))}
+                                isLoaded={isLoaded}
+                            />
                         </div>
 
-                        {/* Description */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Description</label>
-                            <textarea
-                                rows={4}
-                                placeholder="Add any details about this route, major stops, or schedule notes..."
-                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm placeholder:text-slate-400 resize-none"
-                            ></textarea>
-                        </div>
+
                     </form>
                 </div>
 
@@ -159,7 +284,7 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({ isOpen, onClose, onSave }
                         form="add-route-form"
                         className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/25 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                        Save Route
+                        {routeToEdit ? "Update Route" : "Save Route"}
                     </button>
                 </div>
 
