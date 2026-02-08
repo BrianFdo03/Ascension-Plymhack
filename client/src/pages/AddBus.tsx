@@ -12,6 +12,11 @@ interface BusData {
     status: 'Active' | 'Inactive' | 'Maintenance';
 }
 
+interface StopTime {
+    stopName: string;
+    arrivalTime: string;
+}
+
 const MOCK_DRIVERS = [
     { id: '1', name: 'Sunil Perera', license: 'B1234567' },
     { id: '2', name: 'Wimal Kumara', license: 'B9876543' },
@@ -19,10 +24,30 @@ const MOCK_DRIVERS = [
 ];
 
 const MOCK_ROUTES = [
-    { id: 'r1', number: '138', path: 'Pettah - Homagama' },
-    { id: 'r2', number: '01', path: 'Colombo - Kandy' },
-    { id: 'r3', number: '87', path: 'Colombo - Jaffna' },
-    { id: 'r4', number: '122', path: 'Pettah - Avissawella' },
+    { 
+        id: 'r1', 
+        number: '138', 
+        path: 'Pettah - Homagama',
+        stops: ['Pettah', 'Borella', 'Kotte', 'Nugegoda', 'Maharagama', 'Homagama']
+    },
+    { 
+        id: 'r2', 
+        number: '01', 
+        path: 'Colombo - Kandy',
+        stops: ['Colombo Fort', 'Kaduwela', 'Kadugannawa', 'Peradeniya', 'Kandy']
+    },
+    { 
+        id: 'r3', 
+        number: '87', 
+        path: 'Colombo - Jaffna',
+        stops: ['Colombo', 'Vavuniya', 'Kilinochchi', 'Jaffna']
+    },
+    { 
+        id: 'r4', 
+        number: '122', 
+        path: 'Pettah - Avissawella',
+        stops: ['Pettah', 'Wellampitiya', 'Kaduwela', 'Hanwella', 'Avissawella']
+    },
 ];
 
 const MOCK_BUSES: BusData[] = [
@@ -42,6 +67,8 @@ const AddBus = () => {
         routeId: '',
         departureTime: ''
     });
+    const [stopTimes, setStopTimes] = useState<StopTime[]>([]);
+    const [selectedRoute, setSelectedRoute] = useState<typeof MOCK_ROUTES[0] | null>(null);
 
     const filteredBuses = MOCK_BUSES.filter(bus => {
         const matchesSearch = bus.numberPlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -64,12 +91,34 @@ const AddBus = () => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         console.log('Form submitted:', formData);
-        alert(`Successfully added bus: ${formData.numberPlate}\nDeparture Time: ${formData.departureTime}`);
+        console.log('Stop times:', stopTimes);
+        alert(`Successfully added bus: ${formData.numberPlate}\nDeparture Time: ${formData.departureTime}\nStop Times: ${stopTimes.length} stops configured`);
         setFormData({ numberPlate: '', driverId: '', routeId: '', departureTime: '' });
+        setStopTimes([]);
+        setSelectedRoute(null);
         setShowAddModal(false);
+    };
+
+    const handleRouteChange = (routeId: string) => {
+        setFormData({ ...formData, routeId });
+        const route = MOCK_ROUTES.find(r => r.id === routeId);
+        if (route) {
+            setSelectedRoute(route);
+            // Initialize stop times with empty values
+            setStopTimes(route.stops.map(stop => ({ stopName: stop, arrivalTime: '' })));
+        } else {
+            setSelectedRoute(null);
+            setStopTimes([]);
+        }
+    };
+
+    const handleStopTimeChange = (index: number, time: string) => {
+        const newStopTimes = [...stopTimes];
+        newStopTimes[index].arrivalTime = time;
+        setStopTimes(newStopTimes);
     };
 
     return (
@@ -154,7 +203,7 @@ const AddBus = () => {
                                                 required
                                                 className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none appearance-none"
                                                 value={formData.routeId}
-                                                onChange={(e) => setFormData({ ...formData, routeId: e.target.value })}
+                                                onChange={(e) => handleRouteChange(e.target.value)}
                                             >
                                                 <option value="">Select a route</option>
                                                 {MOCK_ROUTES.map(route => (
@@ -185,6 +234,51 @@ const AddBus = () => {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Stop Times Section */}
+                                {selectedRoute && stopTimes.length > 0 && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-semibold text-gray-700">
+                                                Stop Times
+                                            </label>
+                                            <span className="text-xs text-gray-500">
+                                                {stopTimes.length} stops
+                                            </span>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-xl p-4 space-y-3 max-h-64 overflow-y-auto">
+                                            {stopTimes.map((stop, index) => (
+                                                <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600">
+                                                                {index + 1}
+                                                            </div>
+                                                            <span className="text-sm font-medium text-gray-900">
+                                                                {stop.stopName}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                        <input
+                                                            type="time"
+                                                            required
+                                                            placeholder="Time"
+                                                            className="w-36 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                                                            value={stop.arrivalTime}
+                                                            onChange={(e) => handleStopTimeChange(index, e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                            <Clock size={12} />
+                                            Set arrival time for each stop along the route
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Modal Footer */}
